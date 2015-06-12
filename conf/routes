@@ -1,0 +1,5 @@
+
+GET        /                             controllers.MainController.index
+GET        /vessels                    	 controllers.VesselsController.vessels
+
+GET        /assets/*file                 controllers.Assets.at(path="/public", file)
