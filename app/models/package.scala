@@ -1,12 +1,17 @@
 import play.api.libs.json._ // JSON library
 import play.api.libs.functional.syntax._ // Combinator syntax
+import java.util.UUID
 
 package object models {
 
-  trait Identity[T] {
-    def of(entity: T): Option[String]
-    def set(id: String, entity: T): T
+  /**
+   * Type class adding identity manipulation methods
+   */
+  trait Identity[T, ID] {
+    def of(entity: T): Option[ID]
+    def set(entity: T, id: ID): T
     def clear(entity: T): T
+    def next: ID
   }
 
   case class LatLng(latitude: Double, longitude: Double) {
@@ -34,14 +39,15 @@ package object models {
     implicit val PositionFormat = Json.format[Position]
   }
 
-  case class Vessel(id: Option[String], name: String, width: Double, length: Double, draft: Double, lastSeenPosition: Option[Position])
+  case class Vessel(uuid: Option[UUID], name: String, width: Double, length: Double, draft: Double, lastSeenPosition: Option[Position])
   object Vessel {
     implicit val VesselFormat = Json.format[Vessel]
-  }
-  implicit object VesselIdentity extends Identity[Vessel] {
-    def of(entity: Vessel): Option[String] = entity.id
-    def set(id: String, entity: Vessel): Vessel = entity.copy(id = Option(id))
-    def clear(entity: Vessel): Vessel = entity.copy(id = None)
+    implicit object VesselIdentity extends Identity[Vessel, UUID] {
+      def of(entity: Vessel): Option[UUID] = entity.uuid
+      def set(entity: Vessel, id: UUID): Vessel = entity.copy(uuid = Option(id))
+      def clear(entity: Vessel): Vessel = entity.copy(uuid = None)
+      def next: UUID = UUID.randomUUID()
+    }
   }
 
 }

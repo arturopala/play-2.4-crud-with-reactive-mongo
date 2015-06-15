@@ -5,6 +5,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalacheck._
 import play.api.libs.json._
 import play.api.libs.json.Json._
+import java.util.UUID
 
 class ModelSpec extends WordSpecLike with Matchers with PropertyChecks {
 
@@ -71,7 +72,7 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks {
         forAll(NameGenerator, DoubleGenerator, DoubleGenerator, DoubleGenerator, PositionGenerator) {
           (n: String, w: Double, l: Double, d: Double, p: Option[Position]) =>
             val v = Vessel(None, n, w, l, d, p)
-            v.id shouldBe None
+            v.uuid shouldBe None
             v.name should be(n)
             v.width should be(w)
             v.length should be(l)
@@ -89,18 +90,18 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks {
       "should be serializable to/from json object when id is defined" in {
         forAll(NameGenerator, DoubleGenerator, DoubleGenerator, DoubleGenerator, PositionGenerator) {
           (n: String, w: Double, l: Double, d: Double, p: Option[Position]) =>
-            val id = BSONObjectID.generate.stringify
+            val id = UUID.randomUUID()
             val v = Vessel(Some(id), n, w, l, d, p)
-            v.id shouldBe Some(id)
+            v.uuid shouldBe Some(id)
             v.name should be(n)
             v.width should be(w)
             v.length should be(l)
             v.draft should be(d)
             v.lastSeenPosition should be(p)
             val json = Json.obj(
-              "id" -> id, "name" -> JsString(n), "width" -> JsNumber(w), "length" -> JsNumber(l), "draft" -> JsNumber(d))
+              "uuid" -> id, "name" -> JsString(n), "width" -> JsNumber(w), "length" -> JsNumber(l), "draft" -> JsNumber(d))
             toJson(v) should be(p.fold(json)(p => json + ("lastSeenPosition" -> toJson(p))))
-            parse(s"""{"width":$w, "length":$l, "id":"$id", "name":"$n", """ +
+            parse(s"""{"width":$w, "length":$l, "uuid":"$id", "name":"$n", """ +
               p.fold("")(p => s""""lastSeenPosition":${stringify(toJson(p))}, """) +
               s""""draft":$d}""").as[Vessel] should be(v)
         }
@@ -109,7 +110,7 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks {
         forAll(NameGenerator, DoubleGenerator, DoubleGenerator, DoubleGenerator, PositionGenerator) {
           (n: String, w: Double, l: Double, d: Double, p: Option[Position]) =>
             val v = Vessel(None, n, w, l, d, p)
-            v.id shouldBe None
+            v.uuid shouldBe None
             v.name should be(n)
             v.width should be(w)
             v.length should be(l)
@@ -118,7 +119,7 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks {
             val doc = VesselBSONWriter.write(v)
             doc shouldBe a[BSONDocument]
             val v2 = VesselBSONReader.read(doc)
-            v2.id shouldBe None
+            v2.uuid shouldBe None
             v.name should be(v2.name)
             v.width should be(v2.width)
             v.length should be(v2.length)
@@ -129,9 +130,9 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks {
       "should be serializable to/from bson object when id is defined" in {
         forAll(NameGenerator, DoubleGenerator, DoubleGenerator, DoubleGenerator, PositionGenerator) {
           (n: String, w: Double, l: Double, d: Double, p: Option[Position]) =>
-            val id = BSONObjectID.generate.stringify
+            val id = UUID.randomUUID()
             val v = Vessel(Some(id), n, w, l, d, p)
-            v.id shouldBe Some(id)
+            v.uuid shouldBe Some(id)
             v.name should be(n)
             v.width should be(w)
             v.length should be(l)

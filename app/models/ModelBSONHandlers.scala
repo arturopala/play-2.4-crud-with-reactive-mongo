@@ -1,11 +1,17 @@
 package models
 
 import reactivemongo.bson._
+import java.util.UUID
 
 /**
  * BSON to/from conversions for model parts
  */
 object ModelBSONHandlers {
+
+  implicit object BSONUUIDHandler extends BSONHandler[BSONString, UUID] {
+    def read(string: BSONString) = UUID.fromString(string.value)
+    def write(uuid: UUID) = BSONString(uuid.toString)
+  }
 
   implicit object LatLngBSONReader extends BSONDocumentReader[LatLng] {
     def read(doc: BSONDocument): LatLng = LatLng(
@@ -31,7 +37,7 @@ object ModelBSONHandlers {
 
   implicit object VesselBSONReader extends BSONDocumentReader[Vessel] {
     def read(doc: BSONDocument): Vessel = Vessel(
-      doc.getAs[BSONObjectID]("_id").map(_.stringify),
+      doc.getAs[UUID]("uuid"),
       doc.getAs[String]("name").get,
       doc.getAs[Double]("width").get,
       doc.getAs[Double]("length").get,
@@ -42,7 +48,7 @@ object ModelBSONHandlers {
   implicit object VesselBSONWriter extends BSONDocumentWriter[Vessel] {
     def write(elem: Vessel): BSONDocument =
       BSONDocument(
-        "_id" -> elem.id.map(BSONObjectID(_)),
+        "uuid" -> elem.uuid,
         "name" -> elem.name,
         "width" -> elem.width,
         "length" -> elem.length,

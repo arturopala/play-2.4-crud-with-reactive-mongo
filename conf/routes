@@ -1,8 +1,8 @@
 
 GET        /                             controllers.MainController.index
-GET        /vessels/:id                  controllers.VesselsController.one(id)
+GET        /vessels/:id                  controllers.VesselsController.one(id: java.util.UUID)
 GET        /vessels                      controllers.VesselsController.all
 POST	   /vessels 					 controllers.VesselsController.create
-PUT	   	   /vessels/:id 				 controllers.VesselsController.update(id)
+PUT	   	   /vessels/:id 				 controllers.VesselsController.update(id: java.util.UUID)
 
 GET        /assets/*file                 controllers.Assets.at(path="/public", file)

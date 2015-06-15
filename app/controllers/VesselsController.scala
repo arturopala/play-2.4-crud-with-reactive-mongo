@@ -7,10 +7,11 @@ import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
 import play.api.libs.json._
+import java.util.UUID
 
 class VesselsController(vesselsService: VesselsService) extends Controller {
 
-  def one(id: String) = Action.async {
+  def one(id: UUID) = Action.async {
     vesselsService.findById(id).map(_.fold(
       NotFound(s"vessel #$id not found")
     )(vessel =>
@@ -33,7 +34,7 @@ class VesselsController(vesselsService: VesselsService) extends Controller {
     }
   }
 
-  def update(id: String) = Action.async(parse.json) { implicit request =>
+  def update(id: UUID) = Action.async(parse.json) { implicit request =>
     parseValidateAndProcess[Vessel] { vessel =>
       vesselsService.update(id, vessel).map {
         case Right(id) => Ok.withHeaders(LOCATION -> routes.VesselsController.one(id).url)

@@ -7,12 +7,12 @@ import play.api.libs.json._
 /**
  * Generic service trait
  */
-trait Service[T] {
+trait Service[T, ID] {
 
-  def findById(id: String): Future[Option[T]]
+  def findById(id: ID): Future[Option[T]]
   def findByCriteria(criteria: JsValue): Future[List[T]]
-  def create(entity: T)(implicit writes: Writes[T], identity: Identity[T]): Future[Either[String, String]]
-  def update(id: String, entity: T)(implicit identity: Identity[T]): Future[Either[String, String]]
+  def create(entity: T)(implicit writes: Writes[T], identity: Identity[T, ID]): Future[Either[String, ID]]
+  def update(id: ID, entity: T)(implicit identity: Identity[T, ID]): Future[Either[String, ID]]
 }
 
 import reactivemongo.api._
@@ -22,15 +22,15 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 /**
  * Abstract service impl backed by BSONCollection
  */
-abstract class MongoService[T: BSONDocumentReader: BSONDocumentWriter] extends Service[T] {
+abstract class MongoService[T: BSONDocumentReader: BSONDocumentWriter, ID: IdBSONHandler] extends Service[T, ID] {
   import reactivemongo.api.collections.default.BSONCollection
   import play.modules.reactivemongo.json.ImplicitBSONHandlers._
 
   /** Mongo collection deserializable to [T] */
   def collection: BSONCollection
 
-  override def findById(id: String): Future[Option[T]] = collection.
-    find(BSONDocument("_id" -> BSONObjectID(id))).
+  override def findById(id: ID): Future[Option[T]] = collection.
+    find(BSONDocument("uuid" -> id)).
     one[T]
 
   override def findByCriteria(criteria: JsValue): Future[List[T]] = collection.
@@ -38,27 +38,27 @@ abstract class MongoService[T: BSONDocumentReader: BSONDocumentWriter] extends S
     cursor[T].
     collect[List]()
 
-  override def create(entity: T)(implicit writes: Writes[T], identity: Identity[T]): Future[Either[String, String]] = {
+  override def create(entity: T)(implicit writes: Writes[T], identity: Identity[T, ID]): Future[Either[String, ID]] = {
     findByCriteria(Json.toJson(identity.clear(entity))).flatMap {
-      case List(v, _*) =>
-        Future.successful(Right(identity.of(v).get)) // let's be idempotent
+      case List(first, _*) =>
+        Future.successful(Right(identity.of(first).get)) // let's be idempotent
       case Nil => {
         val writer = implicitly[BSONDocumentWriter[T]]
-        val doc = writer.write(identity.set(BSONObjectID.generate.stringify, entity))
+        val doc = writer.write(identity.set(entity, identity.next))
         collection.
           insert(doc).
           map {
-            case le if le.ok == true => Right(doc.getAs[BSONObjectID]("_id").map(_.stringify).get)
+            case le if le.ok == true => Right(doc.getAs[ID]("uuid").get)
             case le => Left(le.errMsg.get)
           }
       }
     }
   }
 
-  override def update(id: String, entity: T)(implicit identity: Identity[T]): Future[Either[String, String]] = {
+  override def update(id: ID, entity: T)(implicit identity: Identity[T, ID]): Future[Either[String, ID]] = {
     val writer = implicitly[BSONDocumentWriter[T]]
-    val doc = writer.write(identity.clear(entity))
-    collection.update(BSONDocument("_id" -> BSONObjectID(id)), doc) map {
+    val doc = writer.write(identity.set(entity, id))
+    collection.update(BSONDocument("uuid" -> id), doc) map {
       case le if le.ok == true => Right(id)
       case le => Left(le.errMsg.get)
     }
