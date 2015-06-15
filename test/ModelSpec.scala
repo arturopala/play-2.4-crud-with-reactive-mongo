@@ -15,11 +15,14 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks {
   val LngGenerator = Gen.chooseNum(-180d, 180d) suchThat (_ < 180)
   val TimeGenerator = Gen.chooseNum(0L, Long.MaxValue)
   val LatLngGenerator = for { lat <- LatGenerator; lng <- LngGenerator } yield LatLng(lat, lng)
-  val PositionGenerator = for { l <- LatLngGenerator; t <- TimeGenerator } yield Position(l, t)
+  val PositionGenerator = Gen.option(for { l <- LatLngGenerator; t <- TimeGenerator } yield Position(l, t))
   val NameGenerator = Gen.alphaStr
   val DoubleGenerator = Gen.chooseNum(0d, 1000d) suchThat (_ > 0)
 
   "A Model" must {
+
+    import ModelBSONHandlers._
+    import reactivemongo.bson._
 
     "provide class LatLng modelling GPS coordinates" which {
       "should be serializable to/from json array" in {
@@ -29,6 +32,15 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks {
           c.longitude should be(b)
           toJson(c) should be(JsArray(Seq(JsNumber(a), JsNumber(b))))
           parse(s"[$a,$b]").as[LatLng] should be(c)
+        }
+      }
+      "should be serializable to/from bson document" in {
+        forAll(LatGenerator, LngGenerator) { (x: Double, y: Double) =>
+          val c = LatLng(x, y)
+          val doc = LatLngBSONWriter.write(c)
+          doc shouldBe a[BSONDocument]
+          val c2 = LatLngBSONReader.read(doc)
+          c2 should be(c)
         }
       }
     }
@@ -43,23 +55,92 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks {
           parse(s"""{"time": $t, "location": ${stringify(toJson(c))}}""").as[Position] should be(p)
         }
       }
+      "should be serializable to/from bson document" in {
+        forAll(LatLngGenerator, TimeGenerator) { (c: LatLng, t: Long) =>
+          val p = Position(c, t)
+          val doc = PositionBSONWriter.write(p)
+          doc shouldBe a[BSONDocument]
+          val p2 = PositionBSONReader.read(doc)
+          p2 should be(p)
+        }
+      }
     }
 
     "provide class Vessel modelling ship at the sea" which {
-      "should be serializable to/from json object" in {
+      "should be serializable to/from json object when id is undefined" in {
         forAll(NameGenerator, DoubleGenerator, DoubleGenerator, DoubleGenerator, PositionGenerator) {
-          (n: String, w: Double, l: Double, d: Double, p: Position) =>
-            val v = Vessel(n, w, l, d, p)
+          (n: String, w: Double, l: Double, d: Double, p: Option[Position]) =>
+            val v = Vessel(None, n, w, l, d, p)
+            v.id shouldBe None
             v.name should be(n)
             v.width should be(w)
             v.length should be(l)
             v.draft should be(d)
             v.lastSeenPosition should be(p)
-            toJson(v) should be(Json.obj(
-              "name" -> JsString(n), "width" -> JsNumber(w), "length" -> JsNumber(l), "draft" -> JsNumber(d),
-              "lastSeenPosition" -> toJson(p)
-            ))
-            parse(s"""{"width":$w, "length":$l, "name":"$n", "lastSeenPosition":${stringify(toJson(p))}, "draft":$d}""").as[Vessel] should be(v)
+            val json = Json.obj(
+              "name" -> JsString(n), "width" -> JsNumber(w), "length" -> JsNumber(l), "draft" -> JsNumber(d)
+            )
+            toJson(v) should be(p.fold(json)(p => json + ("lastSeenPosition" -> toJson(p))))
+            parse(s"""{"width":$w, "length":$l, "name":"$n", """ +
+              p.fold("")(p => s""""lastSeenPosition":${stringify(toJson(p))}, """) +
+              s""""draft":$d}""").as[Vessel] should be(v)
+        }
+      }
+      "should be serializable to/from json object when id is defined" in {
+        forAll(NameGenerator, DoubleGenerator, DoubleGenerator, DoubleGenerator, PositionGenerator) {
+          (n: String, w: Double, l: Double, d: Double, p: Option[Position]) =>
+            val id = BSONObjectID.generate.stringify
+            val v = Vessel(Some(id), n, w, l, d, p)
+            v.id shouldBe Some(id)
+            v.name should be(n)
+            v.width should be(w)
+            v.length should be(l)
+            v.draft should be(d)
+            v.lastSeenPosition should be(p)
+            val json = Json.obj(
+              "id" -> id, "name" -> JsString(n), "width" -> JsNumber(w), "length" -> JsNumber(l), "draft" -> JsNumber(d))
+            toJson(v) should be(p.fold(json)(p => json + ("lastSeenPosition" -> toJson(p))))
+            parse(s"""{"width":$w, "length":$l, "id":"$id", "name":"$n", """ +
+              p.fold("")(p => s""""lastSeenPosition":${stringify(toJson(p))}, """) +
+              s""""draft":$d}""").as[Vessel] should be(v)
+        }
+      }
+      "should be serializable to/from bson object when id is undefined" in {
+        forAll(NameGenerator, DoubleGenerator, DoubleGenerator, DoubleGenerator, PositionGenerator) {
+          (n: String, w: Double, l: Double, d: Double, p: Option[Position]) =>
+            val v = Vessel(None, n, w, l, d, p)
+            v.id shouldBe None
+            v.name should be(n)
+            v.width should be(w)
+            v.length should be(l)
+            v.draft should be(d)
+            v.lastSeenPosition should be(p)
+            val doc = VesselBSONWriter.write(v)
+            doc shouldBe a[BSONDocument]
+            val v2 = VesselBSONReader.read(doc)
+            v2.id shouldBe None
+            v.name should be(v2.name)
+            v.width should be(v2.width)
+            v.length should be(v2.length)
+            v.draft should be(v2.draft)
+            v.lastSeenPosition should be(v2.lastSeenPosition)
+        }
+      }
+      "should be serializable to/from bson object when id is defined" in {
+        forAll(NameGenerator, DoubleGenerator, DoubleGenerator, DoubleGenerator, PositionGenerator) {
+          (n: String, w: Double, l: Double, d: Double, p: Option[Position]) =>
+            val id = BSONObjectID.generate.stringify
+            val v = Vessel(Some(id), n, w, l, d, p)
+            v.id shouldBe Some(id)
+            v.name should be(n)
+            v.width should be(w)
+            v.length should be(l)
+            v.draft should be(d)
+            v.lastSeenPosition should be(p)
+            val doc = VesselBSONWriter.write(v)
+            doc shouldBe a[BSONDocument]
+            val v2 = VesselBSONReader.read(doc)
+            v2 should be(v)
         }
       }
     }

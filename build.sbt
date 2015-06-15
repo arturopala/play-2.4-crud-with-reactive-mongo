@@ -14,17 +14,17 @@ developers := List(Developer("arturopala","Artur Opala","opala.artur@gmail.com",
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
+resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
+
 libraryDependencies ++= Seq(
   specs2 % Test,
-  "com.softwaremill.macwire" %% "macros" % "1.0.1",
-  "com.softwaremill.macwire" %% "runtime" % "1.0.1",
-  "org.scalatest" %% "scalatest" % "2.2.4" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.12.2" % Test
+  "com.softwaremill.macwire" %% "macros" % "1.0.5",
+  "com.softwaremill.macwire" %% "runtime" % "1.0.5",
+  "org.reactivemongo" %% "reactivemongo" % "0.10.5.0.akka23",
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.10.5.0.akka23",
 
-	//"junit" % "junit" % "4.12" % Test,
-	//"com.novocode" % "junit-interface" % "0.10" % Test,
-	//"org.scalautils" % "scalautils_2.11" % "2.1.3" % Test,
-	//"org.scala-lang.modules" %% "scala-xml" % "1.0.3" % Test
+  "org.scalatest" %% "scalatest" % "2.2.5" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.12.2" % Test
 )
 
 routesGenerator := play.routes.compiler.InjectedRoutesGenerator

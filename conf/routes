@@ -1,5 +1,8 @@
 
 GET        /                             controllers.MainController.index
-GET        /vessels                    	 controllers.VesselsController.vessels
+GET        /vessels/:id                  controllers.VesselsController.one(id)
+GET        /vessels                      controllers.VesselsController.all
+POST	   /vessels 					 controllers.VesselsController.create
+PUT	   	   /vessels/:id 				 controllers.VesselsController.update(id)
 
 GET        /assets/*file                 controllers.Assets.at(path="/public", file)
