@@ -14,7 +14,7 @@ import scala.concurrent.duration.Duration
 class CRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks with utils.CommonGenerators with ScalaFutures {
 
   import models._
-  implicit override val generatorDrivenConfig = PropertyCheckConfig(minSize = 1, maxSize = 100, minSuccessful = 100, workers = 1)
+  implicit override val generatorDrivenConfig = PropertyCheckConfig(minSize = 1, maxSize = 100, minSuccessful = 100, workers = 5)
 
   "A TestCRUDService" must {
 
@@ -34,6 +34,9 @@ class CRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks wit
         service.delete(id).futureValue.right.get should be(id)
         service.findById(id).futureValue shouldBe None
         service.findByCriteria(Map("name" -> vessel.name, "width" -> vessel.width)).futureValue should be('empty)
+        service.delete(id).futureValue.right.get should be(id)
+        service.update(id, vessel).futureValue should be('left)
+        service.findById(id).futureValue shouldBe None
       }
     }
   }

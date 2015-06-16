@@ -5,7 +5,7 @@ import scala.concurrent.Future
 import scala.util.{ Try, Success, Failure }
 
 /**
- * Test {{CRUDService}} impl backed by a Map
+ * Test {{CRUDService}} impl backed by a mutable thread-safe Map
  */
 class TestCRUDService[E, ID](implicit identity: Identity[E, ID])
     extends CRUDService[E, ID] {
@@ -28,7 +28,10 @@ class TestCRUDService[E, ID](implicit identity: Identity[E, ID])
                   case Some(v) => o == v
                   case v => o == v
                 }
-                case o => o == value
+                case o => value match {
+                  case Some(v) => o == v
+                  case v => o == v
+                }
               }
             case Failure(e) =>
               false
