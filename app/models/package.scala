@@ -4,16 +4,6 @@ import java.util.UUID
 
 package object models {
 
-  /**
-   * Type class adding identity manipulation methods
-   */
-  trait Identity[T, ID] {
-    def of(entity: T): Option[ID]
-    def set(entity: T, id: ID): T
-    def clear(entity: T): T
-    def next: ID
-  }
-
   case class LatLng(latitude: Double, longitude: Double) {
     require(latitude >= -90 && latitude <= 90, s"Latitude value must be in the range [-90, 90] but was $latitude.")
     require(longitude >= -180 && longitude < 180, s"Longitude value must be in the range [-180, 180) but was $longitude.")

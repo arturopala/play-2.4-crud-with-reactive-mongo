@@ -4,7 +4,7 @@ import models._
 import scala.concurrent.Future
 
 /**
- * Generic CRUD service trait
+ * Generic async CRUD service trait
  * @param E type of entity
  * @param ID type of identity of entity (primary key)
  */
@@ -12,8 +12,8 @@ trait CRUDService[E, ID] {
 
   def findById(id: ID): Future[Option[E]]
   def findByCriteria(criteria: Map[String, Any]): Future[List[E]]
-  def create(entity: E)(implicit identity: Identity[E, ID]): Future[Either[String, ID]]
-  def update(id: ID, entity: E)(implicit identity: Identity[E, ID]): Future[Either[String, ID]]
+  def create(entity: E): Future[Either[String, ID]]
+  def update(id: ID, entity: E): Future[Either[String, ID]]
   def delete(id: ID): Future[Either[String, ID]]
 }
 
@@ -21,9 +21,10 @@ import reactivemongo.api._
 import reactivemongo.bson._
 
 /**
- * Abstract service impl backed by BSONCollection
+ * Abstract {{CRUDService}} impl backed by BSONCollection
  */
-abstract class MongoCRUDService[E: BSONDocumentReader: BSONDocumentWriter, ID: IdBSONHandler] extends CRUDService[E, ID] {
+abstract class MongoCRUDService[E: BSONDocumentReader: BSONDocumentWriter, ID: IdBSONHandler](implicit identity: Identity[E, ID])
+    extends CRUDService[E, ID] {
 
   import reactivemongo.api.collections.default.BSONCollection
   import play.modules.reactivemongo.json.ImplicitBSONHandlers._
@@ -44,7 +45,7 @@ abstract class MongoCRUDService[E: BSONDocumentReader: BSONDocumentWriter, ID: I
     cursor[E].
     collect[List]()
 
-  override def create(entity: E)(implicit identity: Identity[E, ID]): Future[Either[String, ID]] = {
+  override def create(entity: E): Future[Either[String, ID]] = {
     val writer = implicitly[BSONDocumentWriter[E]]
     findByCriteria(writer.write(identity.clear(entity))).flatMap {
       case List(first, _*) =>
@@ -61,7 +62,7 @@ abstract class MongoCRUDService[E: BSONDocumentReader: BSONDocumentWriter, ID: I
     }
   }
 
-  override def update(id: ID, entity: E)(implicit identity: Identity[E, ID]): Future[Either[String, ID]] = {
+  override def update(id: ID, entity: E): Future[Either[String, ID]] = {
     val writer = implicitly[BSONDocumentWriter[E]]
     val doc = writer.write(identity.set(entity, id))
     collection.update(BSONDocument("uuid" -> id), doc) map {
