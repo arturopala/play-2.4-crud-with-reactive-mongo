@@ -30,9 +30,11 @@ package object models {
   }
 
   case class Vessel(uuid: Option[UUID], name: String, width: Double, length: Double, draft: Double, lastSeenPosition: Option[Position])
+
   object Vessel {
     implicit val VesselFormat = Json.format[Vessel]
     implicit object VesselIdentity extends Identity[Vessel, UUID] {
+      val name = "uuid"
       def of(entity: Vessel): Option[UUID] = entity.uuid
       def set(entity: Vessel, id: UUID): Vessel = entity.copy(uuid = Option(id))
       def clear(entity: Vessel): Vessel = entity.copy(uuid = None)

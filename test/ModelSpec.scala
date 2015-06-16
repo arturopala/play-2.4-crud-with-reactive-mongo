@@ -7,18 +7,10 @@ import play.api.libs.json._
 import play.api.libs.json.Json._
 import java.util.UUID
 
-class ModelSpec extends WordSpecLike with Matchers with PropertyChecks {
+class ModelSpec extends WordSpecLike with Matchers with PropertyChecks with utils.CommonGenerators {
 
   import models._
   implicit override val generatorDrivenConfig = PropertyCheckConfig(minSize = 1, maxSize = 100, minSuccessful = 100, workers = 5)
-
-  val LatGenerator = Gen.chooseNum(-90d, 90d)
-  val LngGenerator = Gen.chooseNum(-180d, 180d) suchThat (_ < 180)
-  val TimeGenerator = Gen.chooseNum(0L, Long.MaxValue)
-  val LatLngGenerator = for { lat <- LatGenerator; lng <- LngGenerator } yield LatLng(lat, lng)
-  val PositionGenerator = Gen.option(for { l <- LatLngGenerator; t <- TimeGenerator } yield Position(l, t))
-  val NameGenerator = Gen.alphaStr
-  val DoubleGenerator = Gen.chooseNum(0d, 1000d) suchThat (_ > 0)
 
   "A Model" must {
 

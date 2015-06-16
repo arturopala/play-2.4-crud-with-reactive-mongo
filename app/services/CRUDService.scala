@@ -1,6 +1,5 @@
 package services
 
-import models._
 import scala.concurrent.Future
 
 /**
@@ -11,12 +10,13 @@ import scala.concurrent.Future
 trait CRUDService[E, ID] {
 
   def findById(id: ID): Future[Option[E]]
-  def findByCriteria(criteria: Map[String, Any]): Future[List[E]]
+  def findByCriteria(criteria: Map[String, Any]): Future[Traversable[E]]
   def create(entity: E): Future[Either[String, ID]]
   def update(id: ID, entity: E): Future[Either[String, ID]]
   def delete(id: ID): Future[Either[String, ID]]
 }
 
+import models.Identity
 import reactivemongo.api._
 import reactivemongo.bson._
 
@@ -35,12 +35,12 @@ abstract class MongoCRUDService[E: BSONDocumentReader: BSONDocumentWriter, ID: I
   def collection: BSONCollection
 
   override def findById(id: ID): Future[Option[E]] = collection.
-    find(BSONDocument("uuid" -> id)).
+    find(BSONDocument(identity.name -> id)).
     one[E]
 
-  override def findByCriteria(criteria: Map[String, Any]): Future[List[E]] = findByCriteria(CriteriaBSONWriter.write(criteria))
+  override def findByCriteria(criteria: Map[String, Any]): Future[Traversable[E]] = findByCriteria(CriteriaBSONWriter.write(criteria))
 
-  private def findByCriteria(criteria: BSONDocument): Future[List[E]] = collection.
+  private def findByCriteria(criteria: BSONDocument): Future[Traversable[E]] = collection.
     find(criteria).
     cursor[E].
     collect[List]()
@@ -48,14 +48,14 @@ abstract class MongoCRUDService[E: BSONDocumentReader: BSONDocumentWriter, ID: I
   override def create(entity: E): Future[Either[String, ID]] = {
     val writer = implicitly[BSONDocumentWriter[E]]
     findByCriteria(writer.write(identity.clear(entity))).flatMap {
-      case List(first, _*) =>
-        Future.successful(Right(identity.of(first).get)) // let's be idempotent
-      case Nil => {
+      case t if t.size > 0 =>
+        Future.successful(Right(identity.of(t.head).get)) // let's be idempotent
+      case _ => {
         val doc = writer.write(identity.set(entity, identity.next))
         collection.
           insert(doc).
           map {
-            case le if le.ok == true => Right(doc.getAs[ID]("uuid").get)
+            case le if le.ok == true => Right(doc.getAs[ID](identity.name).get)
             case le => Left(le.message)
           }
       }
@@ -65,14 +65,14 @@ abstract class MongoCRUDService[E: BSONDocumentReader: BSONDocumentWriter, ID: I
   override def update(id: ID, entity: E): Future[Either[String, ID]] = {
     val writer = implicitly[BSONDocumentWriter[E]]
     val doc = writer.write(identity.set(entity, id))
-    collection.update(BSONDocument("uuid" -> id), doc) map {
+    collection.update(BSONDocument(identity.name -> id), doc) map {
       case le if le.ok == true => Right(id)
       case le => Left(le.message)
     }
   }
 
   override def delete(id: ID): Future[Either[String, ID]] = {
-    collection.remove(BSONDocument("uuid" -> id)) map {
+    collection.remove(BSONDocument(identity.name -> id)) map {
       case le if le.ok == true => Right(id)
       case le => Left(le.message)
     }
