@@ -34,7 +34,7 @@ class CRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks wit
         service.delete(id).futureValue.right.get should be(id)
         service.findById(id).futureValue shouldBe None
         service.findByCriteria(Map("name" -> vessel.name, "width" -> vessel.width)).futureValue should be('empty)
-        service.delete(id).futureValue.right.get should be(id)
+        service.delete(id).futureValue should be('left)
         service.update(id, vessel).futureValue should be('left)
         service.findById(id).futureValue shouldBe None
       }
