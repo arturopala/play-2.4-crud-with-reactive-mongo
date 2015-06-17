@@ -1,8 +1,7 @@
-package services
-
 import models.Identity
 import scala.concurrent.Future
 import scala.util.{ Try, Success, Failure }
+import services.CRUDService
 
 /**
  * Test {{CRUDService}} impl backed by a mutable thread-safe Map

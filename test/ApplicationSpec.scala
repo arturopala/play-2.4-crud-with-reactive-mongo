@@ -18,11 +18,12 @@ class ApplicationSpec extends PlaySpecification {
       contentAsString(home) must contain("Your new application is ready.")
     }
 
-    "find all vessels" in new WithApplication {
+    "find all vessels when they are none" in new WithApplication {
       val vessels = route(FakeRequest(GET, "/vessels")).get
       status(vessels) must equalTo(OK)
       contentType(vessels) must beSome.which(_ == "application/json")
       contentAsString(vessels) must contain("[]")
     }
+
   }
 }

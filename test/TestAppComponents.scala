@@ -1,4 +1,4 @@
-import services.{ VesselsService, TestVesselsService }
+import services.VesselsService
 
 trait TestAppComponents extends AppComponents {
 

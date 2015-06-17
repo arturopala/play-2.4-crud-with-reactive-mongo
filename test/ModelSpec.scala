@@ -7,7 +7,7 @@ import play.api.libs.json._
 import play.api.libs.json.Json._
 import java.util.UUID
 
-class ModelSpec extends WordSpecLike with Matchers with PropertyChecks with utils.CommonGenerators {
+class ModelSpec extends WordSpecLike with Matchers with PropertyChecks with CommonGenerators {
 
   import models._
   implicit override val generatorDrivenConfig = PropertyCheckConfig(minSize = 1, maxSize = 100, minSuccessful = 100, workers = 5)

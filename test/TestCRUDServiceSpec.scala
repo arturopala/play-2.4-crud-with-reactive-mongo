@@ -1,5 +1,3 @@
-package services
-
 import org.junit.runner.RunWith
 import org.scalatest.{ WordSpecLike, Matchers }
 import org.scalatest.concurrent.ScalaFutures
@@ -11,7 +9,7 @@ import play.api.libs.json.Json._
 import java.util.UUID
 import scala.concurrent.duration.Duration
 
-class CRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks with utils.CommonGenerators with ScalaFutures {
+class TestCRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks with CommonGenerators with ScalaFutures {
 
   import models._
   implicit override val generatorDrivenConfig = PropertyCheckConfig(minSize = 1, maxSize = 100, minSuccessful = 100, workers = 5)
