@@ -20,3 +20,15 @@ project/plugins/project/
 # Odd Mac Stuff
 .DS_Store
 
+
+# added by GitSavvy
+/project/.sbtserver
+
+# added by GitSavvy
+/project/.sbtserver.lock
+
+# added by GitSavvy
+/project/play-fork-run.sbt
+
+# added by GitSavvy
+/project/sbt-ui.sbt
