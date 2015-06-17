@@ -20,8 +20,8 @@ libraryDependencies ++= Seq(
   specs2 % Test,
   "com.softwaremill.macwire" %% "macros" % "1.0.5",
   "com.softwaremill.macwire" %% "runtime" % "1.0.5",
-  "org.reactivemongo" %% "reactivemongo" % "0.10.5.0.akka23",
-  "org.reactivemongo" %% "play2-reactivemongo" % "0.10.5.0.akka23",
+  "org.reactivemongo" %% "reactivemongo" % "0.11.0-SNAPSHOT",
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.11.0-SNAPSHOT",
 
   "org.scalatest" %% "scalatest" % "2.2.5" % Test,
   "org.scalacheck" %% "scalacheck" % "1.12.2" % Test,

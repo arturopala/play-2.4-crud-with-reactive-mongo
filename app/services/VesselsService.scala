@@ -5,10 +5,9 @@ import java.util.UUID
 
 trait VesselsService extends CRUDService[Vessel, UUID]
 
-import models.ModelBSONHandlers._
-import reactivemongo.bson.DefaultBSONHandlers._
+import play.modules.reactivemongo.json.collection._
 import reactivemongo.api.DB
 
 class VesselsMongoService(db: DB) extends MongoCRUDService[Vessel, UUID] with VesselsService {
-  override val collection = db.collection("vessels")
+  override val collection: JSONCollection = db.collection("vessels")
 }
