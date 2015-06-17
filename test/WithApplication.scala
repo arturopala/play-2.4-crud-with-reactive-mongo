@@ -3,8 +3,9 @@ import play.api.test._
 import play.api.{ Application, ApplicationLoader, Environment, Mode, BuiltInComponents, BuiltInComponentsFromContext, Logger }
 import play.api.ApplicationLoader.Context
 
-class WithApplication extends WithApplicationLoader(new TestApplicationLoader)
-class WithApplicationInBrowser[W <: WebDriver]
+class WithRealApplication extends WithApplicationLoader(new MacwiredApplicationLoader)
+class WithTestApplication extends WithApplicationLoader(new TestApplicationLoader)
+class WithTestApplicationInBrowser[W <: WebDriver]
   extends WithBrowser[W](app = new TestApplicationLoader().load(ApplicationLoader.createContext(new Environment(new java.io.File("."), ApplicationLoader.getClass.getClassLoader, Mode.Test))))
 
 class TestApplicationLoader extends ApplicationLoader {
