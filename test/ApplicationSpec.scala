@@ -92,9 +92,9 @@ class ApplicationSpec extends WordSpecLike with Matchers with PropertyChecks wit
       forAll(VesselGenerator)(VESSEL_CRUD_API_TEST)
     }
 
-    "provide an API to create, find, update and delete vessel - with mongolab backend" in new WithRealApplication {
+    /*"provide an API to create, find, update and delete vessel - with mongolab backend" in new WithRealApplication {
       forAll(VesselGenerator)(VESSEL_CRUD_API_TEST)
-    }
+    }*/
 
   }
 }
