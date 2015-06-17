@@ -15,6 +15,7 @@ developers := List(Developer("arturopala","Artur Opala","opala.artur@gmail.com",
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
+resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 
 libraryDependencies ++= Seq(
   specs2 % Test,
