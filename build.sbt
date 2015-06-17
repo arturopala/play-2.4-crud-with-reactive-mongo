@@ -24,7 +24,8 @@ libraryDependencies ++= Seq(
   "org.reactivemongo" %% "play2-reactivemongo" % "0.10.5.0.akka23",
 
   "org.scalatest" %% "scalatest" % "2.2.5" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.12.2" % Test
+  "org.scalacheck" %% "scalacheck" % "1.12.2" % Test,
+  "org.scalatestplus" %% "play" % "1.4.0-M3" % Test
 )
 
 routesGenerator := play.routes.compiler.InjectedRoutesGenerator

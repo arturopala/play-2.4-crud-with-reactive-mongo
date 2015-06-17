@@ -14,7 +14,7 @@ import services.CRUDService
  * @param E type of entity
  * @param ID type of identity of entity (primary key)
  */
-abstract class CRUDController[E: Format, ID](service: CRUDService[E, ID])(redirectUrl: ID => Call)(implicit identity: Identity[E, ID])
+class CRUDController[E: Format, ID](service: CRUDService[E, ID])(redirectUrl: ID => Call)(implicit identity: Identity[E, ID])
     extends Controller {
 
   def one(id: ID) = Action.async {
@@ -57,7 +57,7 @@ abstract class CRUDController[E: Format, ID](service: CRUDService[E, ID])(redire
 
   def delete(id: ID) = Action.async {
     service.delete(id).map {
-      case Right(id) => Ok.withHeaders(LOCATION -> redirectUrl(id).url)
+      case Right(id) => Ok
       case Left(err) => BadRequest(err)
     }
   }
