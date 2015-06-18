@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vessels Mngmt Tool</title>
+  <link rel="stylesheet" type="text/css" href="https://www.static-immobilienscout24.de/fro/core/2.1.0/css/core.min.css" />
+	<!--[if (lt IE 9) & (!IEMobile)]>
+	<link rel="stylesheet" type="text/css" href="//www.static-immobilienscout24.de/fro/core/2.1.0/css/core_no-mq.min.css" />
+	<![endif]-->
+  <style>
+     input.ng-submitted.ng-invalid, textarea.ng-submitted.ng-invalid, select.ng-submitted.ng-invalid {
+         background-color:#ffdddc!important;
+         border-color:#630000!important;
+     }
+     span.error {
+         color:red!important; 
+     }
+</style>
+</head>
+<body>
+	<div class="viewport">
+      <div class="page-wrapper border-none">
+        
+        <div id="page" ng-cloak ng-app="VesselMgmtTool">
+        <div class="grid gutter-vertical-s margin">
+        <div class="grid-item" ng-controller="CreateVesselController" ng-mousedown="mousedown()">
+                <form name="createVesselForm" class="form form-theme-white padding-horizontal-s padding-top-s" ng-submit="create()">
+                    <h4>Create new vessel</h4>
+                    <fieldset>
+                        <div class="grid gutter-horizontal-l">
+                            <div class="grid-item desk-one-fourth lap-one-half">
+                                <label for="name">Name:</label>
+                                <input id="name" class="input-text" required 
+                                       type="text" ng-model="vessel.name" 
+                                       name="vesselname" placeholder="name of the vessel">
+                            </div>
+                            <div class="grid-item desk-one-fourth lap-one-half">
+                                <label for="length">Length:</label>
+                                <input id="length" class="input-text" required
+                                       type="number" ng-model="vessel.length" min="1" step="1"
+                                       name="vessellength" placeholder="length">
+                             </div>
+                            <div class="grid-item desk-one-fourth lap-one-half">
+                                <label for="width">Width:</label>
+                                <input id="width" class="input-text" required
+                                       type="number" ng-model="vessel.width" min="1" step="0.1"
+                                       name="vesselwidth" placeholder="width">
+                           </div>
+                            <div class="grid-item desk-one-fourth lap-one-half">
+                                <label for="draft">Draft:</label>
+                                <input id="draft" class="input-text" required
+                                       type="number" ng-model="vessel.draft" min="1" step="0.1"
+                                       name="vesseldraft" placeholder="draft"></div>
+                        </div>
+                    </fieldset>
+                    <fieldset ng-show="createVesselForm.$dirty && vessel.name">
+                        <div class="grid gutter-l float-right">
+                            <button type="submit" class="button-primary">
+                                <span class="fa fa-cloud-upload"/>
+                                Create
+                            </button>
+                        </div>
+
+                    </fieldset>
+                </form>
+                <div class="status-message status-confirm" ng-show="hot && created">
+                  <h1>Success</h1>
+                  <p>
+                      Congratulations! Vessel <b>{{vessel.name}}</b> has been registered.
+                  </p>
+              </div>
+            </div>
+
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.16/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.16/angular-route.min.js"></script>
+    <script>
+        angular.module('VesselMgmtTool',[])
+        .value('PageState',{list:[]})
+        .factory('VesselsService',['$http',function($http){
+            return {
+                create: function(vessel){
+                    return $http.post('/vessels', vessel);
+                }
+            };
+        }])
+        .controller('CreateVesselController',['$scope','$filter','VesselsService','PageState',function($scope,$filter,VesselsService,PageState){
+            $scope.vessel = {name:"",width:10,length:50,draft:10};
+            $scope.create = function(){
+              $scope.created = false;
+              VesselsService.create($scope.vessel).success(function(data, status, headers){
+                  if(status==201) {
+                    PageState.vesselUrl = headers('Location');
+                    $scope.hot = true;
+                    $scope.created = true;
+                    $scope.createVesselForm.$setPristine();
+                  }
+              });
+            };
+            $scope.mousedown = function(){
+              $scope.hot = false;
+            }
+        }]);
+      </script>
+</body>
+</html>

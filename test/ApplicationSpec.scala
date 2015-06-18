@@ -30,7 +30,7 @@ class ApplicationSpec extends WordSpecLike with Matchers with PropertyChecks wit
       val home = route(FakeRequest(GET, "/")).get
       status(home) should be(OK)
       contentType(home) shouldBe Some("text/html")
-      contentAsString(home) should include("Your new application is ready.")
+      contentAsString(home) should include("Create new vessel")
     }
 
     val VESSEL_CRUD_API_TEST = { (vessel: Vessel) =>
