@@ -28,13 +28,13 @@ class TestCRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks
         // should find existing entity by id
         service.findById(id).futureValue.get.copy(uuid = None) should be(vessel)
         // should find existing entity by id criteria
-        val found = service.findByCriteria(Map("uuid" -> id)).futureValue
+        val found = service.findByCriteria(Map("uuid" -> id), 2).futureValue
         found should have size 1 // uuid must be unique
         found.head.copy(uuid = None) should be(vessel)
         // should find existing entity by multiple criteria
-        service.findByCriteria(Map("name" -> vessel.name, "width" -> vessel.width, "length" -> vessel.length)).futureValue.head.copy(uuid = None) should be(vessel)
+        service.findByCriteria(Map("name" -> vessel.name, "width" -> vessel.width, "length" -> vessel.length), 2).futureValue.head.copy(uuid = None) should be(vessel)
         // should find existing entity by json query
-        service.findByCriteria(Map("$query" -> Json.toJson(vessel))).futureValue.head.copy(uuid = None) should be(vessel)
+        service.findByCriteria(Map("$query" -> Json.toJson(vessel)), 2).futureValue.head.copy(uuid = None) should be(vessel)
         // create variant of vessel
         val vessel2 = vessel.copy(name = vessel.name.reverse, width = vessel.width + 5, length = vessel.length - 1, uuid = None)
         // should update existing entity
@@ -46,7 +46,7 @@ class TestCRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks
         // should not find by id when removed
         service.findById(id).futureValue shouldBe None
         // should not find by criteria when removed
-        service.findByCriteria(Map("name" -> vessel.name, "width" -> vessel.width, "length" -> vessel.length)).futureValue should be('empty)
+        service.findByCriteria(Map("name" -> vessel.name, "width" -> vessel.width, "length" -> vessel.length), 2).futureValue should be('empty)
         // should confirm deletion even when removed (idempotent)
         service.delete(id).futureValue shouldBe Right(id)
         // should not confirm update nor create new when removed

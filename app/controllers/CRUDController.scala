@@ -17,6 +17,8 @@ import services.CRUDService
 class CRUDController[E: Format, ID](service: CRUDService[E, ID])(redirectUrl: ID => Call)(implicit identity: Identity[E, ID])
     extends Controller {
 
+  private val DEFAULT_LIMIT = Seq("50")
+
   def one(id: ID) = Action.async {
     service.findById(id).map(_.fold(
       NotFound(s"Entity #$id not found")
@@ -28,7 +30,7 @@ class CRUDController[E: Format, ID](service: CRUDService[E, ID])(redirectUrl: ID
   def selection = Action.async { implicit request =>
     (parseJsonParam("query"), parseJsonParam("sort")) match {
       case ((_, Success(query)), (_, Success(sort))) => service
-        .findByCriteria(Map("$query" -> query, "$sort" -> sort))
+        .findByCriteria(Map("$query" -> query, "$sort" -> sort), request.queryString.get("limit").getOrElse(DEFAULT_LIMIT).head.toInt)
         .map(entitys =>
           Ok(Json.toJson(entitys))
         )

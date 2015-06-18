@@ -10,7 +10,7 @@ import scala.concurrent.Future
 trait CRUDService[E, ID] {
 
   def findById(id: ID): Future[Option[E]]
-  def findByCriteria(criteria: Map[String, Any]): Future[Traversable[E]]
+  def findByCriteria(criteria: Map[String, Any], limit: Int): Future[Traversable[E]]
   def create(entity: E): Future[Either[String, ID]]
   def update(id: ID, entity: E): Future[Either[String, ID]]
   def delete(id: ID): Future[Either[String, ID]]
@@ -38,16 +38,16 @@ abstract class MongoCRUDService[E: BSONDocumentReader: BSONDocumentWriter, ID: I
     find(BSONDocument(identity.name -> id)).
     one[E]
 
-  override def findByCriteria(criteria: Map[String, Any]): Future[Traversable[E]] = findByCriteria(CriteriaBSONWriter.write(criteria))
+  override def findByCriteria(criteria: Map[String, Any], limit: Int): Future[Traversable[E]] = findByCriteria(CriteriaBSONWriter.write(criteria), limit)
 
-  private def findByCriteria(criteria: BSONDocument): Future[Traversable[E]] = collection.
+  private def findByCriteria(criteria: BSONDocument, limit: Int): Future[Traversable[E]] = collection.
     find(criteria).
     cursor[E].
-    collect[List]()
+    collect[List](limit)
 
   override def create(entity: E): Future[Either[String, ID]] = {
     val writer = implicitly[BSONDocumentWriter[E]]
-    findByCriteria(writer.write(identity.clear(entity))).flatMap {
+    findByCriteria(writer.write(identity.clear(entity)), 1).flatMap {
       case t if t.size > 0 =>
         Future.successful(Right(identity.of(t.head).get)) // let's be idempotent
       case _ => {
