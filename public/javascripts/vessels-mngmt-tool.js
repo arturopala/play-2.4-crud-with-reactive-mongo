@@ -30,7 +30,7 @@ angular.module('VesselMgmtTool',[])
         var newVesssel = $scope.vessel;
         VesselsService.create(newVesssel).success(function(data, status, headers){
             if(status==201) {
-              PageState.successMessage = "Congratulations! Vessel "+newVesssel.name+" has been registered. Find details below.";
+              PageState.successMessage = "Congratulations! Vessel "+newVesssel.name+" has been registered.";
               newVesssel.uuid = headers("Location").split('/').pop()
               PageState.vessel = newVesssel;
               PageState.listing.push(newVesssel);

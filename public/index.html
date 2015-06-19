@@ -21,13 +21,8 @@
       <div class="page-wrapper border-none">
         
         <div id="page" ng-cloak ng-app="VesselMgmtTool">
+
         <div class="grid gutter-vertical-s margin">
-          <div class="grid-item padding-horizontal-s padding-top-s" ng-controller="MessageController" ng-mousedown="mousedown()">
-            <div class="status-message status-confirm" ng-show="successMessage">
-              <h1>Success</h1>
-              <p>{{successMessage}}</p>
-            </div>
-          </div>
 
           <div class="grid-item padding-horizontal-s padding-top-s" ng-controller="CreateVesselController" ng-mousedown="mousedown()">
 
@@ -154,6 +149,13 @@
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div class="grid-item padding-horizontal-s padding-top-s" ng-controller="MessageController" ng-mousedown="mousedown()">
+              <div class="status-message status-confirm" ng-show="successMessage">
+                <h1>Success</h1>
+                <p>{{successMessage}}</p>
               </div>
             </div>
 
