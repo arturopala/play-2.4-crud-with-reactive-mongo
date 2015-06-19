@@ -60,4 +60,20 @@ class TestCRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks
       }
     }
   }
+
+  "A CriteriaBSONWriter" must {
+    import reactivemongo.bson._
+    import play.api.libs.json._
+    import services.CriteriaBSONWriter
+
+    "serialize criteria to bson" in {
+      CriteriaBSONWriter.write(Map("id" -> 5)) should be(BSONDocument("id" -> 5))
+      CriteriaBSONWriter.write(Map("id" -> "abc")) should be(BSONDocument("id" -> "abc"))
+      CriteriaBSONWriter.write(Map("id" -> 473473278747324L)) should be(BSONDocument("id" -> 473473278747324L))
+      CriteriaBSONWriter.write(Map("id" -> 678.7634734)) should be(BSONDocument("id" -> 678.7634734))
+      CriteriaBSONWriter.write(Map("id" -> false)) should be(BSONDocument("id" -> false))
+      CriteriaBSONWriter.write(Map("$query" -> Json.obj("id" -> Json.obj("$regex" -> "sd.*?")))) should be(BSONDocument("$query" -> BSONDocument("id" -> BSONDocument("$regex" -> "sd.*?"))))
+    }
+
+  }
 }

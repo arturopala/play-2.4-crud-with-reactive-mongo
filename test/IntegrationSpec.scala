@@ -6,7 +6,7 @@ class IntegrationSpec extends Specification {
 
     "work from within a browser" in new WithTestApplicationInBrowser {
       browser.goTo("http://localhost:" + port)
-      browser.pageSource must contain("Create new vessel")
+      browser.pageSource must contain("vessel")
     }
   }
 }
