@@ -2,8 +2,11 @@
 
 #Seed for Play Framework 2.4 CRUD application with Macwire, ReactiveMongo and AngularJS
 
+This app is deployed on Heroku: <https://gentle-fortress-7896.herokuapp.com/>
+
 ###run
 
 ```
 $sbt run
 ```  
+

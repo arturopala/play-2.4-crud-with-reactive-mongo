@@ -19,7 +19,7 @@ angular.module('VesselMgmtTool',[])
         }
     };
 }])
-.controller('CreateVesselController',['$scope','$filter','VesselsService','PageState',function($scope,$filter,VesselsService,PageState){
+.controller('SearchOrCreateVesselController',['$scope','$filter','VesselsService','PageState',function($scope,$filter,VesselsService,PageState){
 
     $scope.vessel = {width:10,length:50,draft:10};
 
@@ -58,6 +58,8 @@ angular.module('VesselMgmtTool',[])
     }
 
     $scope.search = function(){
+      PageState.busy = "searching";
+      PageState.vessel = undefined;
       var q1 = {}; var q2 = {}; var q3 = {}; var q4 = {};
       Criteria.addRegex(q1,"name",$scope.vessel,$scope.vesselForm)
       Criteria.addRange(q1,"width",2,$scope.vessel,$scope.vesselForm)
@@ -67,10 +69,15 @@ angular.module('VesselMgmtTool',[])
       Criteria.addRange(q3,"draft",2,$scope.vessel,$scope.vesselForm)
       Criteria.addPrefix(q4,"name",$scope.vessel,$scope.vesselForm)
       var criteria = {"$or":[q4,q1,q2,q3]}
-      PageState.busy = "searching";
       VesselsService.search(criteria).success(function(data, status, headers){
           if(status==200) {
-            PageState.listing = data;
+          	if(angular.isArray(data)){
+          		if(data.length == 1){
+					PageState.vessel = data[0];
+          		} else if(length>1){
+					PageState.listing = data;
+          		}
+          	}
           }
           PageState.busy = false;
           $scope.vesselForm.$setPristine();

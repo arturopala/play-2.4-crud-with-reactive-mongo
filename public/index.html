@@ -7,6 +7,12 @@
 	<link rel="stylesheet" type="text/css" href="//www.static-immobilienscout24.de/fro/core/2.1.0/css/core_no-mq.min.css" />
 	<![endif]-->
   <style>
+     body {
+          background-image: url(http://www.motorship.com/__data/assets/image/0005/624623/USE-this-pic-TAITAR-NO.2.jpg)
+     }
+     .page-wrapper {
+          border-radius: 10pt;
+     }
      input.ng-submitted.ng-invalid, textarea.ng-submitted.ng-invalid, select.ng-submitted.ng-invalid {
          background-color:#ffdddc!important;
          border-color:#630000!important;
@@ -17,39 +23,40 @@
 </style>
 </head>
 <body>
-	<div class="viewport">
-      <div class="page-wrapper border-none">
+	<div class="viewport margin-vertical-s">
+      <div class="page-wrapper border-none padding-vertical-xs">
         
         <div id="page" ng-cloak ng-app="VesselMgmtTool">
 
         <div class="grid gutter-vertical-s margin">
 
-          <div class="grid-item padding-horizontal-s padding-top-s" ng-controller="CreateVesselController" ng-mousedown="mousedown()">
+          <div class="grid-item padding-horizontal-s padding-top-s" 
+          ng-controller="SearchOrCreateVesselController" ng-mousedown="mousedown()">
 
                 <h4>Search or create vessel</h4>
 
                 <form name="vesselForm" class="form form-theme-white">
                     <fieldset>
                         <div class="grid gutter-horizontal-l">
-                            <div class="grid-item desk-one-half lap-one-half">
+                            <div class="grid-item desk-one-half lap-one-whole">
                                 <label for="vesselname">Name:</label>
                                 <input id="vesselname" class="input-text" required 
                                        type="text" ng-model="vessel.name" 
                                        name="name" placeholder="name of the vessel">
                             </div>
-                            <div class="grid-item desk-one-sixth lap-one-half">
+                            <div class="grid-item desk-one-sixth lap-one-third">
                                 <label for="vessellength">Length: [m]</label>
                                 <input id="vessellength" class="input-text align-center" required
                                        type="number" ng-model="vessel.length" min="1" step="1"
                                        name="length" placeholder="length">
                              </div>
-                            <div class="grid-item desk-one-sixth lap-one-half">
+                            <div class="grid-item desk-one-sixth lap-one-third">
                                 <label for="vesselwidth">Width: [m]</label>
                                 <input id="vesselwidth" class="input-text align-center" required
                                        type="number" ng-model="vessel.width" min="1" step="0.1"
                                        name="width" placeholder="width">
                            </div>
-                            <div class="grid-item desk-one-sixth lap-one-half">
+                            <div class="grid-item desk-one-sixth lap-one-third">
                                 <label for="vesseldraft">Draft: [m]</label>
                                 <input id="vesseldraft" class="input-text align-center" required
                                        type="number" ng-model="vessel.draft" min="1" step="0.1"
