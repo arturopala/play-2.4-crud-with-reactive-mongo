@@ -11,7 +11,7 @@
           background-image: url(http://www.motorship.com/__data/assets/image/0005/624623/USE-this-pic-TAITAR-NO.2.jpg)
      }
      .page-wrapper {
-          border-radius: 10pt;
+          border-radius: 6pt;
      }
      input.ng-submitted.ng-invalid, textarea.ng-submitted.ng-invalid, select.ng-submitted.ng-invalid {
          background-color:#ffdddc!important;
@@ -35,7 +35,7 @@
 
                 <h4>Search or create vessel</h4>
 
-                <form name="vesselForm" class="form form-theme-white">
+                <form name="vesselForm" class="form form-theme-white background-info">
                     <fieldset>
                         <div class="grid gutter-horizontal-l">
                             <div class="grid-item desk-one-half lap-one-whole">
@@ -82,7 +82,7 @@
 
             <div class="grid-item padding-horizontal-s" ng-controller="ShowVesselController" ng-show="vessel" ng-mousedown="mousedown()">
               <div class="grid">
-                <div class="grid-item padding-vertical-xl padding-horizontal-m background-info">
+                <div class="grid-item padding-vertical-l padding-horizontal-m background-info">
                   <div class="grid">
                     <div class="grid-item desk-two-thirds padding-left-s" ng-hide="editMode">
                       <span class="font-ellipsis font-m font-bold font-brandorange">{{vessel.name}}</span> is a vessel <b>{{vessel.length | number: 1}}</b> meters long, its width is {{vessel.width | number: 1}} m and draft is {{vessel.draft | number: 1}} m.
