@@ -1,4 +1,11 @@
-angular.module('VesselMgmtTool',[])
+angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
+.config(function(uiGmapGoogleMapApiProvider) {
+    uiGmapGoogleMapApiProvider.configure({
+        //    key: 'your api key',
+        v: '3.17',
+        libraries: 'weather,geometry,visualization'
+    });
+})
 .value('PageState',{listing:[]})
 .factory('VesselsService',['$http',function($http){
     return {
@@ -60,6 +67,7 @@ angular.module('VesselMgmtTool',[])
     $scope.search = function(){
       PageState.busy = "searching";
       PageState.vessel = undefined;
+      PageState.listing = [];
       var q1 = {}; var q2 = {}; var q3 = {}; var q4 = {};
       Criteria.addRegex(q1,"name",$scope.vessel,$scope.vesselForm)
       Criteria.addRange(q1,"width",2,$scope.vessel,$scope.vesselForm)
@@ -73,9 +81,9 @@ angular.module('VesselMgmtTool',[])
           if(status==200) {
           	if(angular.isArray(data)){
           		if(data.length == 1){
-					PageState.vessel = data[0];
-          		} else if(length>1){
-					PageState.listing = data;
+					       PageState.vessel = data[0];
+          		} else if(data.length>1){
+					       PageState.listing = data;
           		}
           	}
           }
