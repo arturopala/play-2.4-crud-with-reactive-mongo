@@ -28,7 +28,7 @@ trait AppComponents {
     connection.db(config.getString("mongodb.db"))
   }
 
-  lazy val mainController = wire[MainController]
+  lazy val importController = wire[ImportController]
   lazy val vesselsService: VesselsService = wire[VesselsMongoService]
   lazy val vesselsController = wire[VesselsController]
 

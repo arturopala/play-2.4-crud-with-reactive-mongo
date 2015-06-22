@@ -110,6 +110,9 @@ angular.module('VesselMgmtTool',[])
     PageState.successMessage = undefined;
     VesselsService.load(vessel.uuid).success(function(data, status, headers){
         if(status==200) {
+          if(data.lastSeenPosition){
+            data.lastSeenPosition.date = new Date(data.lastSeenPosition.time)
+          }
           PageState.vessel = data;
         }
         PageState.busy = false;
@@ -121,10 +124,22 @@ angular.module('VesselMgmtTool',[])
     $scope.editMode = false;
   };
 
+  $scope.addLastSeenPosition = function(){
+    var datetime = new Date();
+    datetime.setMilliseconds(0);
+    datetime.setSeconds(0);
+    var lastSeenPosition = {location:[0,0], time: datetime.getTime(), date: datetime}
+    PageState.vessel.lastSeenPosition = lastSeenPosition;
+  };
+
   $scope.update = function(vessel){
     PageState.busy = "updating";
     PageState.successMessage = undefined;
     var updatedVessel = vessel;
+    if (updatedVessel.lastSeenPosition.date){
+      updatedVessel.lastSeenPosition.time = updatedVessel.lastSeenPosition.date.getTime();
+      updatedVessel.lastSeenPosition.date = undefined;
+    }
     VesselsService.update(updatedVessel).success(function(data, status, headers){
         if(status==200) {
           PageState.successMessage = "Congratulations! Vessel "+updatedVessel.name+" has been updated.";

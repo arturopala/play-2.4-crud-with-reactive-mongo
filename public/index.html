@@ -106,42 +106,77 @@
                       <form name="vesselFullForm" class="form form-theme-white background-info">
                         <fieldset>
                             <div class="grid gutter-s">
-                                <div class="grid-item one-sixth align-right">
+                                <div class="grid-item one-twelfth align-right">
                                     <label for="vesselname">Name:</label>
                                 </div>
-                                <div class="grid-item five-sixths">
+                                <div class="grid-item eleven-twelfths">
                                     <input id="vesselname" class="input-text font-bold" required 
                                            type="text" ng-model="vessel.name" 
                                            name="name" placeholder="name of the vessel">
                                 </div>
-                                <div class="grid-item one-sixth align-right">
+                                <div class="grid-item one-twelfth align-right">
                                     <label for="vessellength">Length: [m]</label>
                                 </div>
-                                 <div class="grid-item one-sixth">
+                                 <div class="grid-item three-twelfths">
                                     <input id="vessellength" class="input-text align-center" required
                                            type="number" ng-model="vessel.length" min="1" step="1"
                                            name="length" placeholder="length">
                                  </div>
-                                 <div class="grid-item one-sixth align-right">
+                                 <div class="grid-item one-twelfth align-right">
                                     <label for="vesselwidth">Width: [m]</label>
                                 </div>
-                                 <div class="grid-item one-sixth">
+                                 <div class="grid-item three-twelfths">
                                     <input id="vesselwidth" class="input-text align-center" required
                                            type="number" ng-model="vessel.width" min="1" step="0.1"
                                            name="width" placeholder="width">
                                </div>
-                               <div class="grid-item one-sixth align-right">
+                               <div class="grid-item one-twelfth align-right">
                                     <label for="vesseldraft">Draft: [m]</label>
                                 </div>
-                                <div class="grid-item one-sixth">
+                                <div class="grid-item three-twelfths">
                                     <input id="vesseldraft" class="input-text align-center" required
                                            type="number" ng-model="vessel.draft" min="1" step="0.1"
                                            name="draft" placeholder="draft">
                                </div>
                             </div>
                         </fieldset>
+                        <fieldset ng-if="vessel.lastSeenPosition">
+                            <div class="grid gutter-s">
+                                <div class="grid-item one-twelfth align-right">
+                                    <label for="vessellength">Latitude:</label>
+                                </div>
+                                 <div class="grid-item three-twelfths">
+                                    <input id="vessellat" class="input-text align-center"
+                                           type="number" ng-model="vessel.lastSeenPosition.location[0]" min="-90" max="90" step="0.1"
+                                           name="latitude" placeholder="latitude">
+                                 </div>
+                                 <div class="grid-item one-twelfth align-right">
+                                    <label for="vesselwidth">Longitude:</label>
+                                </div>
+                                 <div class="grid-item three-twelfths">
+                                    <input id="vessellng" class="input-text align-center"
+                                           type="number" ng-model="vessel.lastSeenPosition.location[1]" min="-180" max="180" step="0.1"
+                                           name="longitude" placeholder="longitude">
+                               </div>
+                               <div class="grid-item one-twelfth align-right">
+                                    <label for="vesselwidth">Date & Time:</label>
+                                </div>
+                                 <div class="grid-item three-twelfths">
+                                    <input id="vessellng" class="input-text align-center"
+                                           type="datetime-local" ng-model="vessel.lastSeenPosition.date"
+                                           name="datetime" placeholder="">
+                               </div>
+                            </div>
+                        </fieldset>
                         <fieldset>
-                            <div class="grid gutter-l float-right">
+                            <div class="grid gutter-l">
+                              <div class="grid-item desk-one-third">
+                                  <button class="button" ng-click="addLastSeenPosition()" ng-show="!vessel.lastSeenPosition">
+                                    <span class="fa fa-compass"/>
+                                      Add last seen position
+                                  </button>
+                              </div>
+                              <div class="grid-item desk-two-thirds align-right">
                                 <button class="button-secondary" ng-click="update(vessel)">
                                   <span class="fa fa-save"/>
                                     Save changes
@@ -150,6 +185,7 @@
                                   <span class="fa fa-cancel"/>
                                     Cancel
                                 </button>
+                              </div>
                             </div>
                         </fieldset>
                       </form>
