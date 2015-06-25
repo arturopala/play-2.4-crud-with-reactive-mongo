@@ -8,7 +8,7 @@ startYear := Some(2015)
 
 description := "Play 2.4 project seed: Generic CRUD with Macwire and ReactiveMongo"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 
 developers := List(Developer("arturopala","Artur Opala","opala.artur@gmail.com",url("https://pl.linkedin.com/in/arturopala")))
 
