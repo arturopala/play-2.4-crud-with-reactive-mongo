@@ -16,17 +16,17 @@ class TestCRUDService[E, ID](implicit identity: Identity[E, ID])
 
   override def findById(id: ID): Future[Option[E]] = Future.successful(map.get(id))
 
-  override def findByCriteria(criteria: Map[String, Any]): Future[Traversable[E]] = {
+  override def findByCriteria(criteria: Map[String, Any], limit: Int): Future[Traversable[E]] = {
     criteria.get("$query") match {
-      case None => Future.successful(map.values.filter(matches(criteria)))
-      case Some(json: JsObject) => Future.successful(map.values.filter(matches(toCriteria(json))))
+      case None => Future.successful(map.values.filter(matches(criteria)).take(limit))
+      case Some(json: JsObject) => Future.successful(map.values.filter(matches(toCriteria(json))).take(limit))
       case _ => ???
     }
   }
 
   override def create(entity: E): Future[Either[String, ID]] = {
     val criteria = toCriteria(identity.clear(entity))
-    findByCriteria(criteria).map {
+    findByCriteria(criteria, 1).map {
       case t if t.size > 0 =>
         Right(identity.of(t.head).get)
       case _ =>

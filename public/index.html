@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vessels Mngmt Tool</title>
+  <link rel="stylesheet" type="text/css" href="https://www.static-immobilienscout24.de/fro/core/2.1.0/css/core.min.css" />
+	<!--[if (lt IE 9) & (!IEMobile)]>
+	<link rel="stylesheet" type="text/css" href="//www.static-immobilienscout24.de/fro/core/2.1.0/css/core_no-mq.min.css" />
+	<![endif]-->
+  <style>
+     body {
+          background-image: url(http://www.motorship.com/__data/assets/image/0005/624623/USE-this-pic-TAITAR-NO.2.jpg)
+     }
+     .page-wrapper {
+          border-radius: 6pt;
+     }
+     input.ng-submitted.ng-invalid, textarea.ng-submitted.ng-invalid, select.ng-submitted.ng-invalid {
+         background-color:#ffdddc!important;
+         border-color:#630000!important;
+     }
+     span.error {
+         color:red!important; 
+     }
+     .angular-google-map-container { height: 400px; }
+</style>
+</head>
+<body>
+	<div class="viewport margin-vertical-s">
+      <div class="page-wrapper border-none padding-vertical-xs">
+        
+        <div id="page" ng-cloak ng-app="VesselMgmtTool">
+
+        <div class="grid gutter-vertical-s margin">
+
+          <div class="grid-item padding-horizontal-s padding-top-s" 
+          ng-controller="SearchOrCreateVesselController" ng-mousedown="mousedown()">
+
+                <h4>Search or create vessel</h4>
+
+                <form name="vesselForm" class="form form-theme-white background-info">
+                    <fieldset>
+                        <div class="grid gutter-horizontal-l">
+                            <div class="grid-item desk-one-half lap-one-whole">
+                                <label for="vesselname">Name:</label>
+                                <input id="vesselname" class="input-text" required 
+                                       type="text" ng-model="vessel.name" 
+                                       name="name" placeholder="name of the vessel">
+                            </div>
+                            <div class="grid-item desk-one-sixth lap-one-third">
+                                <label for="vessellength">Length: [m]</label>
+                                <input id="vessellength" class="input-text align-center" required
+                                       type="number" ng-model="vessel.length" min="1" step="1"
+                                       name="length" placeholder="length">
+                             </div>
+                            <div class="grid-item desk-one-sixth lap-one-third">
+                                <label for="vesselwidth">Width: [m]</label>
+                                <input id="vesselwidth" class="input-text align-center" required
+                                       type="number" ng-model="vessel.width" min="1" step="0.1"
+                                       name="width" placeholder="width">
+                           </div>
+                            <div class="grid-item desk-one-sixth lap-one-third">
+                                <label for="vesseldraft">Draft: [m]</label>
+                                <input id="vesseldraft" class="input-text align-center" required
+                                       type="number" ng-model="vessel.draft" min="1" step="0.1"
+                                       name="draft" placeholder="draft">
+                           </div>
+                        </div>
+                    </fieldset>
+                    <fieldset ng-show="vesselForm.$dirty && vesselForm.$valid">
+                        <div class="grid gutter-l float-right">
+                            <button type="submit" class="button-secondary" ng-click="search()">
+                                <span class="fa fa-search"/>
+                                Search
+                            </button>
+                            <button class="button-primary" ng-click="create()">
+                                <span class="fa fa-cloud-upload"/>
+                                Create
+                            </button>
+                        </div>
+
+                    </fieldset>
+                </form>
+            </div>
+
+            <div class="grid-item padding-horizontal-s" ng-controller="ShowVesselController" ng-show="vessel" ng-mousedown="mousedown()">
+              <div class="grid">
+                <div class="grid-item padding-vertical-l padding-horizontal-m background-info">
+                  <div class="grid">
+                    <div class="grid-item desk-two-thirds padding-left-s margin-bottom-s" ng-hide="editMode">
+                      <span class="font-ellipsis font-m font-bold font-brandorange">{{vessel.name}}</span> is a vessel <b>{{vessel.length | number: 1}}</b> meters long, its width is {{vessel.width | number: 1}} m and draft is {{vessel.draft | number: 1}} m.
+                    </div>
+                    <div class="grid-item desk-one-third" ng-hide="editMode">
+                      <div class="float-right">
+                          <button class="button" ng-click="edit(vessel)">
+                              <span class="fa fa-edit"/>
+                              Edit
+                          </button>
+                          <button class="button font-error" ng-click="delete(vessel)">
+                              <span class="fa fa-trash-o"/>
+                              Delete
+                          </button>
+                        </div>
+                    </div>
+
+                    <div class="grid-item" ng-show="editMode">
+
+                      <h6>Edit <span class="font-brandorange font-bold">{{vessel.name | limitTo : 64}}</span> vessel details</h6>
+
+                      <form name="vesselFullForm" class="form form-theme-white background-info">
+                        <fieldset>
+                            <div class="grid gutter-s">
+                                <div class="grid-item one-twelfth align-right">
+                                    <label for="vesselname">Name:</label>
+                                </div>
+                                <div class="grid-item eleven-twelfths">
+                                    <input id="vesselname" class="input-text font-bold" required 
+                                           type="text" ng-model="vessel.name" 
+                                           name="name" placeholder="name of the vessel">
+                                </div>
+                                <div class="grid-item one-twelfth align-right">
+                                    <label for="vessellength">Length: [m]</label>
+                                </div>
+                                 <div class="grid-item three-twelfths">
+                                    <input id="vessellength" class="input-text align-center" required
+                                           type="number" ng-model="vessel.length" min="1" step="1"
+                                           name="length" placeholder="length">
+                                 </div>
+                                 <div class="grid-item one-twelfth align-right">
+                                    <label for="vesselwidth">Width: [m]</label>
+                                </div>
+                                 <div class="grid-item three-twelfths">
+                                    <input id="vesselwidth" class="input-text align-center" required
+                                           type="number" ng-model="vessel.width" min="1" step="0.1"
+                                           name="width" placeholder="width">
+                               </div>
+                               <div class="grid-item one-twelfth align-right">
+                                    <label for="vesseldraft">Draft: [m]</label>
+                                </div>
+                                <div class="grid-item three-twelfths">
+                                    <input id="vesseldraft" class="input-text align-center" required
+                                           type="number" ng-model="vessel.draft" min="1" step="0.1"
+                                           name="draft" placeholder="draft">
+                               </div>
+                            </div>
+                        </fieldset>
+                        <fieldset ng-if="vessel.lastSeenPosition">
+                            <div class="grid gutter-s">
+                                <div class="grid-item one-twelfth align-right">
+                                    <label for="vessellength">Latitude:</label>
+                                </div>
+                                 <div class="grid-item three-twelfths">
+                                    <input id="vessellat" class="input-text align-center"
+                                           type="number" ng-model="vessel.lastSeenPosition.location[0]" min="-90" max="90" step="0.1"
+                                           name="latitude" placeholder="latitude">
+                                 </div>
+                                 <div class="grid-item one-twelfth align-right">
+                                    <label for="vesselwidth">Longitude:</label>
+                                </div>
+                                 <div class="grid-item three-twelfths">
+                                    <input id="vessellng" class="input-text align-center"
+                                           type="number" ng-model="vessel.lastSeenPosition.location[1]" min="-180" max="180" step="0.1"
+                                           name="longitude" placeholder="longitude">
+                               </div>
+                               <div class="grid-item one-twelfth align-right">
+                                    <label for="vesselwidth">Date & Time:</label>
+                                </div>
+                                 <div class="grid-item three-twelfths">
+                                    <input id="vessellng" class="input-text align-center"
+                                           type="datetime-local" ng-model="vessel.lastSeenPosition.date"
+                                           name="datetime" placeholder="">
+                               </div>
+                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <div class="grid gutter-l">
+                              <div class="grid-item desk-one-third">
+                                  <button class="button" ng-click="addLastSeenPosition()" ng-show="!vessel.lastSeenPosition">
+                                    <span class="fa fa-compass"/>
+                                      Add last seen position
+                                  </button>
+                              </div>
+                              <div class="grid-item desk-two-thirds align-right">
+                                <button class="button-secondary" ng-click="update(vessel)">
+                                  <span class="fa fa-save"/>
+                                    Save changes
+                                </button>
+                                <button class="button" ng-click="cancel()">
+                                  <span class="fa fa-cancel"/>
+                                    Cancel
+                                </button>
+                              </div>
+                            </div>
+                        </fieldset>
+                      </form>
+                    </div>
+
+                    <div class="grid-item one-whole" ng-show="vessel.lastSeenPosition">
+                      <ui-gmap-google-map center='vessel.lastSeenPosition.location' zoom='4'>
+                           <ui-gmap-marker coords="vessel.lastSeenPosition.location" idkey="vessel.uuid" options="{labelContent:'Vessel '+vessel.name}"></ui-gmap-marker>
+                        </ui-gmap-google-map>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid-item padding-horizontal-s padding-top-s" ng-controller="MessageController" ng-mousedown="mousedown()">
+              <div class="status-message status-confirm" ng-show="successMessage">
+                <h1>Success</h1>
+                <p>{{successMessage}}</p>
+              </div>
+            </div>
+
+            <div class="grid-item padding-horizontal-s padding-top-s" ng-controller="ListVesselsController" ng-show="vessels && vessels.length > 0">
+
+              <h4>Search results</h4>
+
+              <div class="grid gutter-s margin-vertical border-bottom border-dotted" ng-repeat="vessel in vessels track by $index">
+                <div class="grid-item desk-one-half lap-one-whole palm-one-whole padding-left-l">
+                  <span class="font-ellipsis" style="cursor:pointer" href ng-click="show(vessel)">{{vessel.name}}</span>
+                </div>
+                <div class="grid-item padding-horizontal-xl desk-one-sixth lap-one-third palm-one-third align-right">{{vessel.length | number: 1}} m</div>
+                <div class="grid-item padding-horizontal-xl desk-one-sixth lap-one-third palm-one-third align-right">{{vessel.width | number: 1}} m</div>
+                <div class="grid-item padding-horizontal-xl desk-one-sixth lap-one-third palm-one-third align-right">{{vessel.draft | number: 1}} m</div>
+              </div>
+            </div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.16/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.16/angular-route.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.9.3/lodash.min.js"></script>
+    <script src="https://rawgit.com/angular-ui/angular-google-maps/2.1.5/dist/angular-google-maps.min.js"></script>
+    <script src="/assets/javascripts/vessels-mngmt-tool.js"></script>
+</body>
+</html>

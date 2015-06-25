@@ -1,5 +1,5 @@
 
-GET        /                             controllers.MainController.index
+GET        /                             controllers.Assets.at(path="/public", file="index.html")
 GET        /vessels/:id                  controllers.VesselsController.one(id: java.util.UUID)
 GET        /vessels                      controllers.VesselsController.selection
 POST	   /vessels 					 controllers.VesselsController.create
@@ -7,3 +7,5 @@ PUT	   	   /vessels/:id 				 controllers.VesselsController.update(id: java.util.
 DELETE	   /vessels/:id 				 controllers.VesselsController.delete(id: java.util.UUID)
 
 GET        /assets/*file                 controllers.Assets.at(path="/public", file)
+
+GET		   /importdb					 controllers.ImportController.importDatabase

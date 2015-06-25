@@ -30,7 +30,7 @@ class ApplicationSpec extends WordSpecLike with Matchers with PropertyChecks wit
       val home = route(FakeRequest(GET, "/")).get
       status(home) should be(OK)
       contentType(home) shouldBe Some("text/html")
-      contentAsString(home) should include("Your new application is ready.")
+      contentAsString(home) should include("vessel")
     }
 
     val VESSEL_CRUD_API_TEST = { (vessel: Vessel) =>
@@ -51,7 +51,7 @@ class ApplicationSpec extends WordSpecLike with Matchers with PropertyChecks wit
       val storedVessel = Json.parse(contentAsString(findByIdResponse)).as[Vessel]
       storedVessel should be(vessel.copy(uuid = Some(UUID.fromString(uuid))))
       // Test FIND BY CRITERIA
-      val criteria = Json.stringify(Json.toJson(vessel.copy(lastSeenPosition = None)))
+      val criteria = Json.stringify(Json.toJson(vessel /*.copy(lastSeenPosition = None)*/ ))
       val findByCiteriaRequest = FakeRequest(GET, s"/vessels?query=$criteria")
       val findByCiteriaResponse = route(findByCiteriaRequest).get
       status(findByCiteriaResponse) should be(OK)
@@ -92,9 +92,9 @@ class ApplicationSpec extends WordSpecLike with Matchers with PropertyChecks wit
       forAll(VesselGenerator)(VESSEL_CRUD_API_TEST)
     }
 
-    "provide an API to create, find, update and delete vessel - with mongolab backend" in new WithRealApplication {
+    /*"provide an API to create, find, update and delete vessel - with mongolab backend" in new WithRealApplication {
       forAll(VesselGenerator)(VESSEL_CRUD_API_TEST)
-    }
+    }*/
 
   }
 }

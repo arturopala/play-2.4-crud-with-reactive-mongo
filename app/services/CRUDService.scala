@@ -10,7 +10,7 @@ import scala.concurrent.Future
 trait CRUDService[E, ID] {
 
   def findById(id: ID): Future[Option[E]]
-  def findByCriteria(criteria: Map[String, Any]): Future[Traversable[E]]
+  def findByCriteria(criteria: Map[String, Any], limit: Int): Future[Traversable[E]]
   def create(entity: E): Future[Either[String, ID]]
   def update(id: ID, entity: E): Future[Either[String, ID]]
   def delete(id: ID): Future[Either[String, ID]]
@@ -28,6 +28,7 @@ abstract class MongoCRUDService[E: Format, ID: Format](implicit identity: Identi
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
   import play.modules.reactivemongo.json.collection.JSONCollection
+  import play.modules.reactivemongo.json._
 
   /** Mongo collection deserializable to [E] */
   def collection: JSONCollection
@@ -36,21 +37,21 @@ abstract class MongoCRUDService[E: Format, ID: Format](implicit identity: Identi
     find(Json.obj(identity.name -> id)).
     one[E]
 
-  override def findByCriteria(criteria: Map[String, Any]): Future[Traversable[E]] =
-    findByCriteria(CriteriaJSONWriter.writes(criteria))
+  override def findByCriteria(criteria: Map[String, Any], limit: Int): Future[Traversable[E]] =
+    findByCriteria(CriteriaJSONWriter.writes(criteria), limit)
 
-  private def findByCriteria(criteria: JsValue): Future[Traversable[E]] = collection.
+  private def findByCriteria(criteria: JsObject, limit: Int): Future[Traversable[E]] = collection.
     find(criteria).
-    cursor[E].
-    collect[List]()
+    cursor[E](readPreference = ReadPreference.primary).
+    collect[List](limit)
 
   override def create(entity: E): Future[Either[String, ID]] = {
-    findByCriteria(Json.toJson(identity.clear(entity))).flatMap {
+    findByCriteria(Json.toJson(identity.clear(entity)).as[JsObject], 1).flatMap {
       case t if t.size > 0 =>
         Future.successful(Right(identity.of(t.head).get)) // let's be idempotent
       case _ => {
         val id = identity.next
-        val doc = Json.toJson(identity.set(entity, id))
+        val doc = Json.toJson(identity.set(entity, id)).as[JsObject]
         collection.
           insert(doc).
           map {
@@ -62,7 +63,7 @@ abstract class MongoCRUDService[E: Format, ID: Format](implicit identity: Identi
   }
 
   override def update(id: ID, entity: E): Future[Either[String, ID]] = {
-    val doc = Json.toJson(identity.set(entity, id))
+    val doc = Json.toJson(identity.set(entity, id)).as[JsObject]
     collection.update(Json.obj(identity.name -> id), doc) map {
       case le if le.ok == true => Right(id)
       case le => Left(le.message)
@@ -76,19 +77,20 @@ abstract class MongoCRUDService[E: Format, ID: Format](implicit identity: Identi
     }
   }
 
-  implicit object CriteriaJSONWriter extends Writes[Map[String, Any]] {
-    override def writes(criteria: Map[String, Any]): JsObject = JsObject(criteria.mapValues(toJsValue(_)).toSeq)
-    val toJsValue: PartialFunction[Any, JsValue] = {
-      case v: String => JsString(v)
-      case v: Int => JsNumber(v)
-      case v: Long => JsNumber(v)
-      case v: Double => JsNumber(v)
-      case v: Boolean => JsBoolean(v)
-      case obj: JsValue => obj
-      case map: Map[String, Any] @unchecked => CriteriaJSONWriter.writes(map)
-      case coll: Traversable[_] => JsArray(coll.map(toJsValue(_)).toSeq)
-      case null => JsNull
-      case other => throw new IllegalArgumentException(s"Criteria value type not supported: $other")
-    }
+}
+
+object CriteriaJSONWriter extends Writes[Map[String, Any]] {
+  override def writes(criteria: Map[String, Any]): JsObject = JsObject(criteria.mapValues(toJsValue(_)).toSeq)
+  val toJsValue: PartialFunction[Any, JsValue] = {
+    case v: String => JsString(v)
+    case v: Int => JsNumber(v)
+    case v: Long => JsNumber(v)
+    case v: Double => JsNumber(v)
+    case v: Boolean => JsBoolean(v)
+    case obj: JsValue => obj
+    case map: Map[String, Any] @unchecked => CriteriaJSONWriter.writes(map)
+    case coll: Traversable[_] => JsArray(coll.map(toJsValue(_)).toSeq)
+    case null => JsNull
+    case other => throw new IllegalArgumentException(s"Criteria value type not supported: $other")
   }
 }
