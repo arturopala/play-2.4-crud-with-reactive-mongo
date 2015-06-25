@@ -144,7 +144,7 @@ angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
     PageState.busy = "updating";
     PageState.successMessage = undefined;
     var updatedVessel = vessel;
-    if (updatedVessel.lastSeenPosition.date){
+    if (updatedVessel.lastSeenPosition && updatedVessel.lastSeenPosition.date){
       updatedVessel.lastSeenPosition.time = updatedVessel.lastSeenPosition.date.getTime();
       updatedVessel.lastSeenPosition.date = undefined;
     }
