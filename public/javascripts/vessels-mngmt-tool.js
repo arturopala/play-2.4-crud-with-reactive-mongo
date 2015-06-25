@@ -50,10 +50,10 @@ angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
 
     var Criteria = {
       addPrefix: function(criteria,field,model,form){
-        if(form[field] && model[field]) criteria[field] = {"$regex": '^'+model[field]+'.*'}
+        if(form[field] && model[field]) criteria[field] = {"$regex": '^'+model[field]+'.*',"$options":"i"}
       },
       addRegex: function(criteria,field,model,form){
-        if(form[field] && model[field]) criteria[field] = {"$regex":'.*?'+model[field]+'.*'} 
+        if(form[field] && model[field]) criteria[field] = {"$regex":'.*?'+model[field]+'.*',"$options":"i"} 
       },
       addRange: function(criteria,field,range,model,form){
         if(form[field] && model[field]) {
