@@ -50,10 +50,10 @@ angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
 
     var Criteria = {
       addPrefix: function(criteria,field,model,form){
-        if(form[field] && model[field]) criteria[field] = {"$regex": '^'+model[field]+'.*'}
+        if(form[field] && model[field]) criteria[field] = {"$regex": '^'+model[field]+'.*',"$options":"i"}
       },
       addRegex: function(criteria,field,model,form){
-        if(form[field] && model[field]) criteria[field] = {"$regex":'.*?'+model[field]+'.*'} 
+        if(form[field] && model[field]) criteria[field] = {"$regex":'.*?'+model[field]+'.*',"$options":"i"} 
       },
       addRange: function(criteria,field,range,model,form){
         if(form[field] && model[field]) {
@@ -79,13 +79,13 @@ angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
       var criteria = {"$or":[q4,q1,q2,q3]}
       VesselsService.search(criteria).success(function(data, status, headers){
           if(status==200) {
-          	if(angular.isArray(data)){
-          		if(data.length == 1){
-					       PageState.vessel = data[0];
-          		} else if(data.length>1){
-					       PageState.listing = data;
-          		}
-          	}
+            if(angular.isArray(data)){
+              if(data.length == 1){
+                 PageState.vessel = data[0];
+              } else if(data.length>1){
+                 PageState.listing = data;
+              }
+            }
           }
           PageState.busy = false;
           $scope.vesselForm.$setPristine();
@@ -144,7 +144,7 @@ angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
     PageState.busy = "updating";
     PageState.successMessage = undefined;
     var updatedVessel = vessel;
-    if (updatedVessel.lastSeenPosition.date){
+    if (updatedVessel.lastSeenPosition && updatedVessel.lastSeenPosition.date){
       updatedVessel.lastSeenPosition.time = updatedVessel.lastSeenPosition.date.getTime();
       updatedVessel.lastSeenPosition.date = undefined;
     }
