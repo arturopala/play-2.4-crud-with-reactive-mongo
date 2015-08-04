@@ -8,7 +8,7 @@ startYear := Some(2015)
 
 description := "Play 2.4 project seed: Generic CRUD with Macwire and ReactiveMongo"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 
 developers := List(Developer("arturopala","Artur Opala","opala.artur@gmail.com",url("https://pl.linkedin.com/in/arturopala")))
 
@@ -21,12 +21,12 @@ libraryDependencies ++= Seq(
   specs2 % Test,
   "com.softwaremill.macwire" %% "macros" % "1.0.5",
   "com.softwaremill.macwire" %% "runtime" % "1.0.5",
-  "org.reactivemongo" %% "reactivemongo" % "0.11.0-M2",
-  "org.reactivemongo" %% "play2-reactivemongo" % "0.11.0.play24-M2",
+  "org.reactivemongo" %% "reactivemongo" % "0.11.5",
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.11.5.play24",
 
   "org.scalatest" %% "scalatest" % "2.2.5" % Test,
   "org.scalacheck" %% "scalacheck" % "1.12.2" % Test,
-  "org.scalatestplus" %% "play" % "1.4.0-M3" % Test
+  "org.scalatestplus" %% "play" % "1.4.0-M4" % Test
 )
 
 routesGenerator := play.routes.compiler.InjectedRoutesGenerator
