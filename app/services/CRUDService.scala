@@ -26,7 +26,7 @@ import reactivemongo.bson._
 abstract class MongoCRUDService[E: BSONDocumentReader: BSONDocumentWriter, ID: IdBSONHandler](implicit identity: Identity[E, ID])
     extends CRUDService[E, ID] {
 
-  import reactivemongo.api.collections.default.BSONCollection
+  import reactivemongo.api.collections.bson.BSONCollection
   import play.modules.reactivemongo.json.ImplicitBSONHandlers._
   import play.api.libs.json._
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -40,10 +40,13 @@ abstract class MongoCRUDService[E: BSONDocumentReader: BSONDocumentWriter, ID: I
 
   override def findByCriteria(criteria: Map[String, Any], limit: Int): Future[Traversable[E]] = findByCriteria(CriteriaBSONWriter.write(criteria), limit)
 
-  private def findByCriteria(criteria: BSONDocument, limit: Int): Future[Traversable[E]] = collection.
-    find(criteria).
-    cursor[E].
-    collect[List](limit)
+  private def findByCriteria(criteria: BSONDocument, limit: Int): Future[Traversable[E]] = {
+    println(BSONDocument.pretty(criteria))
+    collection.
+      find(criteria).
+      cursor[E](readPreference = reactivemongo.api.ReadPreference.primaryPreferred).
+      collect[List](limit)
+  }
 
   override def create(entity: E): Future[Either[String, ID]] = {
     val writer = implicitly[BSONDocumentWriter[E]]
@@ -81,7 +84,7 @@ abstract class MongoCRUDService[E: BSONDocumentReader: BSONDocumentWriter, ID: I
 
 object CriteriaBSONWriter extends BSONDocumentWriter[Map[String, Any]] {
   import reactivemongo.bson.DefaultBSONHandlers._
-  import reactivemongo.api.collections.default.BSONCollection
+  import reactivemongo.api.collections.bson.BSONCollection
   import play.modules.reactivemongo.json.ImplicitBSONHandlers._
   import play.api.libs.json._
 
