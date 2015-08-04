@@ -14,9 +14,6 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks with Comm
 
   "A Model" must {
 
-    import ModelBSONHandlers._
-    import reactivemongo.bson._
-
     "provide class LatLng modelling GPS coordinates" which {
       "should be serializable to/from json array" in {
         forAll(LatGenerator, LngGenerator) { (a: Double, b: Double) =>
@@ -25,15 +22,7 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks with Comm
           c.longitude should be(b)
           toJson(c) should be(JsArray(Seq(JsNumber(a), JsNumber(b))))
           parse(s"[$a,$b]").as[LatLng] should be(c)
-        }
-      }
-      "should be serializable to/from bson document" in {
-        forAll(LatGenerator, LngGenerator) { (x: Double, y: Double) =>
-          val c = LatLng(x, y)
-          val doc = LatLngBSONWriter.write(c)
-          doc shouldBe a[BSONDocument]
-          val c2 = LatLngBSONReader.read(doc)
-          c2 should be(c)
+          parse(s"""{"0":$a,"1":$b}""").as[LatLng] should be(c)
         }
       }
     }
@@ -46,15 +35,6 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks with Comm
           p.location should be(c)
           toJson(p) should be(JsObject(Map("location" -> toJson(c), "time" -> JsNumber(t))))
           parse(s"""{"time": $t, "location": ${stringify(toJson(c))}}""").as[Position] should be(p)
-        }
-      }
-      "should be serializable to/from bson document" in {
-        forAll(LatLngGenerator, TimeGenerator) { (c: LatLng, t: Long) =>
-          val p = Position(c, t)
-          val doc = PositionBSONWriter.write(p)
-          doc shouldBe a[BSONDocument]
-          val p2 = PositionBSONReader.read(doc)
-          p2 should be(p)
         }
       }
     }
@@ -96,44 +76,6 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks with Comm
             parse(s"""{"width":$w, "length":$l, "uuid":"$id", "name":"$n", """ +
               p.fold("")(p => s""""lastSeenPosition":${stringify(toJson(p))}, """) +
               s""""draft":$d}""").as[Vessel] should be(v)
-        }
-      }
-      "should be serializable to/from bson object when id is undefined" in {
-        forAll(NameGenerator, DoubleGenerator, DoubleGenerator, DoubleGenerator, PositionGenerator) {
-          (n: String, w: Double, l: Double, d: Double, p: Option[Position]) =>
-            val v = Vessel(None, n, w, l, d, p)
-            v.uuid shouldBe None
-            v.name should be(n)
-            v.width should be(w)
-            v.length should be(l)
-            v.draft should be(d)
-            v.lastSeenPosition should be(p)
-            val doc = VesselBSONWriter.write(v)
-            doc shouldBe a[BSONDocument]
-            val v2 = VesselBSONReader.read(doc)
-            v2.uuid shouldBe None
-            v.name should be(v2.name)
-            v.width should be(v2.width)
-            v.length should be(v2.length)
-            v.draft should be(v2.draft)
-            v.lastSeenPosition should be(v2.lastSeenPosition)
-        }
-      }
-      "should be serializable to/from bson object when id is defined" in {
-        forAll(NameGenerator, DoubleGenerator, DoubleGenerator, DoubleGenerator, PositionGenerator) {
-          (n: String, w: Double, l: Double, d: Double, p: Option[Position]) =>
-            val id = UUID.randomUUID()
-            val v = Vessel(Some(id), n, w, l, d, p)
-            v.uuid shouldBe Some(id)
-            v.name should be(n)
-            v.width should be(w)
-            v.length should be(l)
-            v.draft should be(d)
-            v.lastSeenPosition should be(p)
-            val doc = VesselBSONWriter.write(v)
-            doc shouldBe a[BSONDocument]
-            val v2 = VesselBSONReader.read(doc)
-            v2 should be(v)
         }
       }
     }

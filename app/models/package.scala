@@ -17,7 +17,11 @@ package object models {
     object LatLngReads extends Reads[LatLng] {
       def reads(json: JsValue) = json match {
         case JsArray(Seq(JsNumber(a), JsNumber(b))) => JsSuccess(LatLng(a.toDouble, b.toDouble))
-        case _ => JsError("error.expected.jsarray")
+        case json: JsObject => {
+          val a = (json \ "0").as[Double]
+          val b = (json \ "1").as[Double]
+          JsSuccess(LatLng(a, b))
+        }
       }
     }
 

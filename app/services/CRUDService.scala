@@ -40,10 +40,11 @@ abstract class MongoCRUDService[E: Format, ID: Format](implicit identity: Identi
   override def findByCriteria(criteria: Map[String, Any], limit: Int): Future[Traversable[E]] =
     findByCriteria(CriteriaJSONWriter.writes(criteria), limit)
 
-  private def findByCriteria(criteria: JsObject, limit: Int): Future[Traversable[E]] = collection.
-    find(criteria).
-    cursor[E](readPreference = ReadPreference.primary).
-    collect[List](limit)
+  private def findByCriteria(criteria: JsObject, limit: Int): Future[Traversable[E]] =
+    collection.
+      find(criteria).
+      cursor[E](readPreference = ReadPreference.primary).
+      collect[List](limit)
 
   override def create(entity: E): Future[Either[String, ID]] = {
     findByCriteria(Json.toJson(identity.clear(entity)).as[JsObject], 1).flatMap {

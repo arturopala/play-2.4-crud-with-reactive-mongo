@@ -6,8 +6,6 @@ import play.api.test.Helpers
 
 class WithRealApplication extends WithApplicationLoader(new MacwiredApplicationLoader)
 class WithTestApplication extends WithApplicationLoader(new TestApplicationLoader)
-class WithTestApplicationInBrowser[W <: WebDriver]
-  extends WithBrowser[W](webDriver = WebDriverFactory(Helpers.FIREFOX), app = new TestApplicationLoader().load(ApplicationLoader.createContext(new Environment(new java.io.File("."), ApplicationLoader.getClass.getClassLoader, Mode.Test))))
 
 class TestApplicationLoader extends ApplicationLoader {
   def load(context: Context): Application = {
