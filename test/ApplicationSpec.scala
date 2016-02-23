@@ -1,4 +1,3 @@
-
 import org.junit.runner.RunWith
 import org.scalatest.{ WordSpecLike, Matchers }
 import org.scalatest.concurrent.ScalaFutures

@@ -1,6 +1,7 @@
-import models.Identity
-import scala.concurrent.Future
 import scala.util.{ Try, Success, Failure }
+import scala.concurrent.{ ExecutionContext, Future }
+
+import models.Identity
 import services.CRUDService
 
 /**
@@ -10,13 +11,12 @@ class TestCRUDService[E, ID](implicit identity: Identity[E, ID])
     extends CRUDService[E, ID] {
 
   import play.api.libs.json._
-  import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   val map: scala.collection.mutable.Map[ID, E] = scala.collection.concurrent.TrieMap()
 
-  override def findById(id: ID): Future[Option[E]] = Future.successful(map.get(id))
+  def findById(id: ID)(implicit ec: ExecutionContext): Future[Option[E]] = Future.successful(map.get(id))
 
-  override def findByCriteria(criteria: Map[String, Any], limit: Int): Future[Traversable[E]] = {
+  def findByCriteria(criteria: Map[String, Any], limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] = {
     criteria.get("$query") match {
       case None => Future.successful(map.values.filter(matches(criteria)).take(limit))
       case Some(json: JsObject) => Future.successful(map.values.filter(matches(toCriteria(json))).take(limit))
@@ -24,7 +24,7 @@ class TestCRUDService[E, ID](implicit identity: Identity[E, ID])
     }
   }
 
-  override def create(entity: E): Future[Either[String, ID]] = {
+  def create(entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]] = {
     val criteria = toCriteria(identity.clear(entity))
     findByCriteria(criteria, 1).map {
       case t if t.size > 0 =>
@@ -37,7 +37,7 @@ class TestCRUDService[E, ID](implicit identity: Identity[E, ID])
     }
   }
 
-  override def update(id: ID, entity: E): Future[Either[String, ID]] = {
+  def update(id: ID, entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]] = {
     if (map.contains(id)) {
       map(id) = identity.set(identity.clear(entity), id)
       Future.successful(Right(id))
@@ -46,7 +46,7 @@ class TestCRUDService[E, ID](implicit identity: Identity[E, ID])
     }
   }
 
-  override def delete(id: ID): Future[Either[String, ID]] = {
+  def delete(id: ID)(implicit ec: ExecutionContext): Future[Either[String, ID]] = {
     map.remove(id)
     Future.successful(Right(id)) //be idempotent
   }

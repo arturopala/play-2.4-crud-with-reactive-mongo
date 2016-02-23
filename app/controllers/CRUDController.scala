@@ -2,6 +2,7 @@ package controllers
 
 import scala.concurrent.Future
 import scala.util.{ Try, Success, Failure }
+
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
 import play.api.libs.json._
@@ -14,8 +15,7 @@ import services.CRUDService
  * @param E type of entity
  * @param ID type of identity of entity (primary key)
  */
-class CRUDController[E: Format, ID](service: CRUDService[E, ID])(redirectUrl: ID => Call)(implicit identity: Identity[E, ID])
-    extends Controller {
+class CRUDController[E: Format, ID](service: CRUDService[E, ID])(redirectUrl: ID => Call)(implicit identity: Identity[E, ID]) extends Controller {
 
   private val DEFAULT_LIMIT = Seq("50")
 
