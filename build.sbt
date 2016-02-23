@@ -1,6 +1,6 @@
 name := """play-2.4-crud-with-reactive-mongo"""
 
-version := "1.0-SNAPSHOT"
+version := "1.0.0"
 
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
