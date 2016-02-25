@@ -1,13 +1,17 @@
+import java.util.UUID
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+
+import play.api.libs.json._
+import play.api.libs.json.Json._
+
 import org.junit.runner.RunWith
 import org.scalatest.{ WordSpecLike, Matchers }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.junit.JUnitRunner
 import org.scalacheck._
-import play.api.libs.json._
-import play.api.libs.json.Json._
-import java.util.UUID
-import scala.concurrent.duration.Duration
 
 class TestCRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks with CommonGenerators with ScalaFutures {
 

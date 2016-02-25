@@ -1,6 +1,6 @@
 package services
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 /**
  * Generic async CRUD service trait
@@ -9,11 +9,11 @@ import scala.concurrent.Future
  */
 trait CRUDService[E, ID] {
 
-  def findById(id: ID): Future[Option[E]]
-  def findByCriteria(criteria: Map[String, Any], limit: Int): Future[Traversable[E]]
-  def create(entity: E): Future[Either[String, ID]]
-  def update(id: ID, entity: E): Future[Either[String, ID]]
-  def delete(id: ID): Future[Either[String, ID]]
+  def findById(id: ID)(implicit ec: ExecutionContext): Future[Option[E]]
+  def findByCriteria(criteria: Map[String, Any], limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]]
+  def create(entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]]
+  def update(id: ID, entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]]
+  def delete(id: ID)(implicit ec: ExecutionContext): Future[Either[String, ID]]
 }
 
 import models.Identity
@@ -23,61 +23,53 @@ import play.api.libs.json._
 /**
  * Abstract {{CRUDService}} impl backed by JSONCollection
  */
-abstract class MongoCRUDService[E: Format, ID: Format](implicit identity: Identity[E, ID])
-    extends CRUDService[E, ID] {
+abstract class MongoCRUDService[E: Format, ID: Format](
+    implicit identity: Identity[E, ID]) extends CRUDService[E, ID] {
 
-  import play.api.libs.concurrent.Execution.Implicits.defaultContext
-  import play.modules.reactivemongo.json.collection.JSONCollection
-  import play.modules.reactivemongo.json._
+  import reactivemongo.play.json._
+  import reactivemongo.play.json.collection.JSONCollection
 
   /** Mongo collection deserializable to [E] */
-  def collection: JSONCollection
+  def collection(implicit ec: ExecutionContext): Future[JSONCollection]
 
-  override def findById(id: ID): Future[Option[E]] = collection.
-    find(Json.obj(identity.name -> id)).
-    one[E]
+  def findById(id: ID)(implicit ec: ExecutionContext): Future[Option[E]] = collection.flatMap(_.find(Json.obj(identity.name -> id)).one[E])
 
-  override def findByCriteria(criteria: Map[String, Any], limit: Int): Future[Traversable[E]] =
-    findByCriteria(CriteriaJSONWriter.writes(criteria), limit)
+  def findByCriteria(criteria: Map[String, Any], limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] = findByCriteria(CriteriaJSONWriter.writes(criteria), limit)
 
-  private def findByCriteria(criteria: JsObject, limit: Int): Future[Traversable[E]] =
-    collection.
-      find(criteria).
+  private def findByCriteria(criteria: JsObject, limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] =
+    collection.flatMap(_.find(criteria).
       cursor[E](readPreference = ReadPreference.primary).
-      collect[List](limit)
+      collect[List](limit))
 
-  override def create(entity: E): Future[Either[String, ID]] = {
-    findByCriteria(Json.toJson(identity.clear(entity)).as[JsObject], 1).flatMap {
+  def create(entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]] = {
+    findByCriteria(Json.toJson(
+      identity.clear(entity)).as[JsObject], 1).flatMap {
       case t if t.size > 0 =>
         Future.successful(Right(identity.of(t.head).get)) // let's be idempotent
       case _ => {
         val id = identity.next
         val doc = Json.toJson(identity.set(entity, id)).as[JsObject]
-        collection.
-          insert(doc).
-          map {
-            case le if le.ok == true => Right(id)
-            case le => Left(le.message)
-          }
+
+        collection.flatMap(_.insert(doc).map {
+          case le if le.ok == true => Right(id)
+          case le => Left(le.message)
+        })
       }
     }
   }
 
-  override def update(id: ID, entity: E): Future[Either[String, ID]] = {
+  def update(id: ID, entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]] = {
     val doc = Json.toJson(identity.set(entity, id)).as[JsObject]
-    collection.update(Json.obj(identity.name -> id), doc) map {
+    collection.flatMap(_.update(Json.obj(identity.name -> id), doc) map {
       case le if le.ok == true => Right(id)
       case le => Left(le.message)
-    }
+    })
   }
 
-  override def delete(id: ID): Future[Either[String, ID]] = {
-    collection.remove(Json.obj(identity.name -> id)) map {
-      case le if le.ok == true => Right(id)
-      case le => Left(le.message)
-    }
-  }
-
+  def delete(id: ID)(implicit ec: ExecutionContext): Future[Either[String, ID]] = collection.flatMap(_.remove(Json.obj(identity.name -> id)) map {
+    case le if le.ok == true => Right(id)
+    case le => Left(le.message)
+  })
 }
 
 object CriteriaJSONWriter extends Writes[Map[String, Any]] {
