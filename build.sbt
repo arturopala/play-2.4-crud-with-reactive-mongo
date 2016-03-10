@@ -1,6 +1,6 @@
 name := """play-2.4-crud-with-reactive-mongo"""
 
-version := "1.0.0"
+version := "1.0.1-SNAPSHOT"
 
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
@@ -8,7 +8,7 @@ startYear := Some(2015)
 
 description := "Play 2.4 project seed: Generic CRUD with Macwire and ReactiveMongo"
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 
 developers := List(Developer("arturopala","Artur Opala","opala.artur@gmail.com",url("https://pl.linkedin.com/in/arturopala")))
 
@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
   "com.softwaremill.macwire" %% "macros" % "1.0.5",
   "com.softwaremill.macwire" %% "runtime" % "1.0.5",
   "org.reactivemongo" %% "reactivemongo" % "0.11.5",
-  "org.reactivemongo" %% "play2-reactivemongo" % "0.11.5.play24",
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.11.10",
 
   "org.scalatest" %% "scalatest" % "2.2.5" % Test,
   "org.scalacheck" %% "scalacheck" % "1.12.2" % Test,

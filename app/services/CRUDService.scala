@@ -43,7 +43,7 @@ abstract class MongoCRUDService[E: Format, ID: Format](implicit identity: Identi
   private def findByCriteria(criteria: JsObject, limit: Int): Future[Traversable[E]] =
     collection.
       find(criteria).
-      cursor[E](readPreference = ReadPreference.primary).
+      cursor[E](readPreference = ReadPreference.nearest).
       collect[List](limit)
 
   override def create(entity: E): Future[Either[String, ID]] = {

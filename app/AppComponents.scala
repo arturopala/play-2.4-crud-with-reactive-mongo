@@ -2,6 +2,7 @@ import controllers._
 import services._
 import reactivemongo.api._
 import com.typesafe.config.ConfigFactory
+import util._
 
 trait AppComponents {
 
@@ -15,18 +16,17 @@ trait AppComponents {
     import scala.collection.JavaConversions._
 
     val driver = new MongoDriver
-    val connection = driver.connection(
-      config.getStringList("mongodb.servers"),
-      MongoConnectionOptions(),
-      Seq(Authenticate(
-        config.getString("mongodb.db"),
-        config.getString("mongodb.credentials.username"),
-        config.getString("mongodb.credentials.password")
-      )
-      )
-    )
-    connection.db(config.getString("mongodb.db"))
+    val uriString = config.getString("mongodb.uri")
+    val uri = MongoConnection.parseURI(uriString) match {
+      case Success(uri) => uri
+      case Failure(e) => throw new Exception(s"Could not parse mongodb uri $uriString", e)
+    }
+    println(uri)
+    val connection = driver.connection(uri)
+    connection(uri.db.get)
   }
+
+  db.collection("vessels")
 
   lazy val importController = wire[ImportController]
   lazy val vesselsService: VesselsService = wire[VesselsMongoService]
