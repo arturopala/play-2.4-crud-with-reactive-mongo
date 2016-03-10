@@ -19,8 +19,8 @@ resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 
 libraryDependencies ++= Seq(
   specs2 % Test,
-  "com.softwaremill.macwire" %% "macros" % "1.0.5",
-  "com.softwaremill.macwire" %% "runtime" % "1.0.5",
+  "com.softwaremill.macwire" %% "macros" % "2.2.2",
+  "com.softwaremill.macwire" %% "runtime" % "1.0.7",
   "org.reactivemongo" %% "play2-reactivemongo" % "0.11.10",
 
   "org.scalatest" %% "scalatest" % "2.2.5" % Test,

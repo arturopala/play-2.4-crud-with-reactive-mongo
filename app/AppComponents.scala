@@ -6,18 +6,19 @@ import reactivemongo.api._
 import com.typesafe.config.ConfigFactory
 
 trait AppComponents {
-  import com.softwaremill.macwire.MacwireMacros._
+  import com.softwaremill.macwire._
 
   lazy val config = ConfigFactory.load
 
   lazy val driver = new MongoDriver
 
-  def db: Future[DefaultDB] = {
+  lazy val db: Future[DefaultDB] = {
     import scala.concurrent.ExecutionContext.Implicits.global
 
+    val parsedUri = MongoConnection.parseURI(config getString "mongodb.uri")
+
     for {
-      uri <- Future.fromTry(MongoConnection.parseURI(
-        config getString "mongodb.uri"))
+      uri <- Future.fromTry(parsedUri)
       con = driver.connection(uri)
       dn <- Future(uri.db.get)
       db <- con.database(dn)
