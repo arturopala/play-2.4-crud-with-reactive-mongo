@@ -14,9 +14,9 @@ class TestCRUDService[E, ID](implicit identity: Identity[E, ID])
 
   val map: scala.collection.mutable.Map[ID, E] = scala.collection.concurrent.TrieMap()
 
-  def findById(id: ID)(implicit ec: ExecutionContext): Future[Option[E]] = Future.successful(map.get(id))
+  def read(id: ID)(implicit ec: ExecutionContext): Future[Option[E]] = Future.successful(map.get(id))
 
-  def findByCriteria(criteria: Map[String, Any], limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] = {
+  def search(criteria: Map[String, Any], limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] = {
     criteria.get("$query") match {
       case None => Future.successful(map.values.filter(matches(criteria)).take(limit))
       case Some(json: JsObject) => Future.successful(map.values.filter(matches(toCriteria(json))).take(limit))
@@ -24,9 +24,13 @@ class TestCRUDService[E, ID](implicit identity: Identity[E, ID])
     }
   }
 
+  def search(criteria: JsObject, limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] = {
+    Future.successful(map.values.filter(matches(toCriteria(criteria))).take(limit))
+  }
+
   def create(entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]] = {
     val criteria = toCriteria(identity.clear(entity))
-    findByCriteria(criteria, 1).map {
+    search(criteria, 1).map {
       case t if t.size > 0 =>
         Right(identity.of(t.head).get)
       case _ =>

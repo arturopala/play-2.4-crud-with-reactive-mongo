@@ -15,29 +15,9 @@ import services.CRUDService
  * @param E type of entity
  * @param ID type of identity of entity (primary key)
  */
-class CRUDController[E: Format, ID](service: CRUDService[E, ID])(redirectUrl: ID => Call)(implicit identity: Identity[E, ID]) extends Controller {
+abstract class CRUDController[E: Format, ID](val service: CRUDService[E, ID])(redirectUrl: ID => Call)(implicit identity: Identity[E, ID]) extends Controller {
 
-  private val DEFAULT_LIMIT = Seq("50")
-
-  def one(id: ID) = Action.async {
-    service.findById(id).map(_.fold(
-      NotFound(s"Entity #$id not found")
-    )(entity =>
-        Ok(Json.toJson(entity)))
-    )
-  }
-
-  def selection = Action.async { implicit request =>
-    (parseJsonParam("query"), parseJsonParam("sort")) match {
-      case ((_, Success(query)), (_, Success(sort))) => service
-        .findByCriteria(Map("$query" -> query, "$sort" -> sort), request.queryString.get("limit").getOrElse(DEFAULT_LIMIT).head.toInt)
-        .map(entity =>
-          Ok(Json.toJson(entity))
-        )
-      case (q, s) => Future.successful(BadRequest(toError(q) ++ toError(s)))
-    }
-
-  }
+  val DEFAULT_LIMIT = Seq("50")
 
   def create = Action.async(parse.json) { implicit request =>
     parseValidateAndProcess[E] { entity =>
@@ -46,6 +26,14 @@ class CRUDController[E: Format, ID](service: CRUDService[E, ID])(redirectUrl: ID
         case Left(err) => BadRequest(err)
       }
     }
+  }
+
+  def read(id: ID) = Action.async {
+    service.read(id).map(_.fold(
+      NotFound(s"Entity #$id not found")
+    )(entity =>
+        Ok(Json.toJson(entity)))
+    )
   }
 
   def update(id: ID) = Action.async(parse.json) { implicit request =>
@@ -64,7 +52,7 @@ class CRUDController[E: Format, ID](service: CRUDService[E, ID])(redirectUrl: ID
     }
   }
 
-  private def parseValidateAndProcess[T: Reads](t: T => Future[Result])(implicit request: Request[JsValue]) = {
+  def parseValidateAndProcess[T: Reads](t: T => Future[Result])(implicit request: Request[JsValue]) = {
     request.body.validate[T].map(t) match {
       case JsSuccess(result, _) => result
       case JsError(err) => Future.successful(BadRequest(Json.toJson(err.map {
@@ -73,9 +61,9 @@ class CRUDController[E: Format, ID](service: CRUDService[E, ID])(redirectUrl: ID
     }
   }
 
-  private def parseJsonParam(param: String)(implicit request: Request[Any]): (String, Try[JsValue]) = (param, Try(request.queryString.get(param).map(_.head).map(Json.parse(_)).getOrElse(Json.obj())))
+  def parseJsonParam(param: String)(implicit request: Request[Any]): (String, Try[JsValue]) = (param, Try(request.queryString.get(param).map(_.head).map(Json.parse(_)).getOrElse(Json.obj())))
 
-  private def toError(t: (String, Try[JsValue])): JsObject = t match {
+  def toError(t: (String, Try[JsValue])): JsObject = t match {
     case (paramName, Failure(e)) => Json.obj(paramName -> e.getMessage)
     case _ => Json.obj()
   }

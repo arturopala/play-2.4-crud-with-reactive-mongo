@@ -1,6 +1,7 @@
 package services
 
 import scala.concurrent.{ ExecutionContext, Future }
+import play.api.libs.json._
 
 /**
  * Generic async CRUD service trait
@@ -9,8 +10,9 @@ import scala.concurrent.{ ExecutionContext, Future }
  */
 trait CRUDService[E, ID] {
 
-  def findById(id: ID)(implicit ec: ExecutionContext): Future[Option[E]]
-  def findByCriteria(criteria: Map[String, Any], limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]]
+  def read(id: ID)(implicit ec: ExecutionContext): Future[Option[E]]
+  def search(criteria: JsObject, limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]]
+  def search(criteria: Map[String, Any], limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]]
   def create(entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]]
   def update(id: ID, entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]]
   def delete(id: ID)(implicit ec: ExecutionContext): Future[Either[String, ID]]
@@ -18,7 +20,6 @@ trait CRUDService[E, ID] {
 
 import models.Identity
 import reactivemongo.api._
-import play.api.libs.json._
 
 /**
  * Abstract {{CRUDService}} impl backed by JSONCollection
@@ -32,17 +33,17 @@ abstract class MongoCRUDService[E: Format, ID: Format](
   /** Mongo collection deserializable to [E] */
   def collection(implicit ec: ExecutionContext): Future[JSONCollection]
 
-  def findById(id: ID)(implicit ec: ExecutionContext): Future[Option[E]] = collection.flatMap(_.find(Json.obj(identity.name -> id)).one[E])
+  def read(id: ID)(implicit ec: ExecutionContext): Future[Option[E]] = collection.flatMap(_.find(Json.obj(identity.name -> id)).one[E])
 
-  def findByCriteria(criteria: Map[String, Any], limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] = findByCriteria(CriteriaJSONWriter.writes(criteria), limit)
+  def search(criteria: Map[String, Any], limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] = search(CriteriaJSONWriter.writes(criteria), limit)
 
-  private def findByCriteria(criteria: JsObject, limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] =
+  def search(criteria: JsObject, limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] =
     collection.flatMap(_.find(criteria).
       cursor[E](readPreference = ReadPreference.nearest).
       collect[List](limit))
 
   def create(entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]] = {
-    findByCriteria(Json.toJson(
+    search(Json.toJson(
       identity.clear(entity)).as[JsObject], 1).flatMap {
       case t if t.size > 0 =>
         Future.successful(Right(identity.of(t.head).get)) // let's be idempotent
