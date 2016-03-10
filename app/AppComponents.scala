@@ -6,7 +6,7 @@ import util._
 
 trait AppComponents {
 
-  import com.softwaremill.macwire.MacwireMacros._
+  import com.softwaremill.macwire._
 
   lazy val config = ConfigFactory.load
 
@@ -21,12 +21,9 @@ trait AppComponents {
       case Success(uri) => uri
       case Failure(e) => throw new Exception(s"Could not parse mongodb uri $uriString", e)
     }
-    println(uri)
     val connection = driver.connection(uri)
     connection(uri.db.get)
   }
-
-  db.collection("vessels")
 
   lazy val importController = wire[ImportController]
   lazy val vesselsService: VesselsService = wire[VesselsMongoService]

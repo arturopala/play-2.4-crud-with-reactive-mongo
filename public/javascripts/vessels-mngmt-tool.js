@@ -19,7 +19,7 @@ angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
             return $http.put('/vessels/'+vessel.uuid, vessel);
         },
         search: function(criteria){
-            return $http.get('/vessels?query='+JSON.stringify(criteria), {cache: false});
+            return $http.get('/vessels/search/'+criteria, {cache: false});
         },
         delete: function(vessel){
             return $http.delete('/vessels/'+vessel.uuid);
@@ -77,7 +77,7 @@ angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
       Criteria.addRange(q3,"draft",2,$scope.vessel,$scope.vesselForm)
       Criteria.addPrefix(q4,"name",$scope.vessel,$scope.vesselForm)
       var criteria = {"$or":[q4,q1,q2,q3]}
-      VesselsService.search(criteria).success(function(data, status, headers){
+      VesselsService.search($scope.vessel.name).success(function(data, status, headers){
           if(status==200) {
           	if(angular.isArray(data)){
           		if(data.length == 1){

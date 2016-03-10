@@ -16,10 +16,11 @@ import controllers.Assets
 
 trait Components extends BuiltInComponents with AppComponents with I18nComponents {
 
-  import com.softwaremill.macwire.MacwireMacros._
+  import com.softwaremill.macwire._
 
+  lazy val prefix = "/"
   lazy val assets: Assets = wire[Assets]
-  lazy val router: Router = wire[Routes] withPrefix "/"
+  lazy val router: Router = wire[Routes]
 
   def langs: Langs
 }

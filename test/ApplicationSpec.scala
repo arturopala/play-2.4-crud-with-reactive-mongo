@@ -44,20 +44,20 @@ class ApplicationSpec extends WordSpecLike with Matchers with PropertyChecks wit
       locationHeader should fullyMatch regex UUIDRegex
       val UUIDRegex(uuid) = locationHeader
       // Test FIND BY ID
-      val findByIdRequest = FakeRequest(GET, s"/vessels/$uuid")
-      val findByIdResponse = route(findByIdRequest).get
-      status(findByIdResponse) should be(OK)
-      contentType(findByIdResponse) shouldBe Some("application/json")
-      val storedVessel = Json.parse(contentAsString(findByIdResponse)).as[Vessel]
+      val readRequest = FakeRequest(GET, s"/vessels/$uuid")
+      val readResponse = route(readRequest).get
+      status(readResponse) should be(OK)
+      contentType(readResponse) shouldBe Some("application/json")
+      val storedVessel = Json.parse(contentAsString(readResponse)).as[Vessel]
       storedVessel should be(vessel.copy(uuid = Some(UUID.fromString(uuid))))
       // Test FIND BY CRITERIA
-      val criteria = Json.stringify(Json.toJson(vessel /*.copy(lastSeenPosition = None)*/ ))
-      val findByCiteriaRequest = FakeRequest(GET, s"/vessels?query=$criteria")
+      /* val criteria = Json.stringify(Json.toJson(vessel /*.copy(lastSeenPosition = None)*/ ))
+      val findByCiteriaRequest = FakeRequest(GET, s"/vessels/search/${vessel.name}")
       val findByCiteriaResponse = route(findByCiteriaRequest).get
       status(findByCiteriaResponse) should be(OK)
       val foundVessels = Json.parse(contentAsString(findByCiteriaResponse)).as[List[Vessel]]
       foundVessels should have size 1
-      foundVessels.head should be(storedVessel)
+      foundVessels.head should be(storedVessel)*/
       // Test UPDATE
       val modifiedVessel = vessel.copy(name = vessel.name.reverse, uuid = Some(UUID.randomUUID()))
       val updateRequest = FakeRequest(PUT, s"/vessels/$uuid").withJsonBody(Json.toJson(modifiedVessel))
@@ -77,12 +77,12 @@ class ApplicationSpec extends WordSpecLike with Matchers with PropertyChecks wit
       status(deleteResponse2) should be(OK)
       header(LOCATION, deleteResponse2) shouldBe None
       // Test again FIND BY ID
-      val findByIdResponse2 = route(findByIdRequest).get
-      status(findByIdResponse2) should be(NOT_FOUND)
-      // Test again FIND BY CRITERIA
+      val readResponse2 = route(readRequest).get
+      status(readResponse2) should be(NOT_FOUND)
+      /*// Test again FIND BY CRITERIA
       val findByCiteriaResponse2 = route(findByCiteriaRequest).get
       status(findByCiteriaResponse2) should be(OK)
-      contentAsString(findByCiteriaResponse2) should be("[]")
+      contentAsString(findByCiteriaResponse2) should be("[]")*/
       // Test again UPDATE
       val updateResponse2 = route(updateRequest).get
       //status(updateResponse2) should be(BAD_REQUEST) FIXME: Fails with mongolab
