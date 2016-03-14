@@ -1,7 +1,7 @@
 
 GET        /                             controllers.Assets.at(path="/public", file="index.html")
 GET        /vessels/:id                  controllers.VesselsController.read(id: java.util.UUID)
-GET        /vessels                      controllers.VesselsController.search
+POST       /vessels/search               controllers.VesselsController.search
 POST	   /vessels 					 controllers.VesselsController.create
 PUT	   	   /vessels/:id 				 controllers.VesselsController.update(id: java.util.UUID)
 DELETE	   /vessels/:id 				 controllers.VesselsController.delete(id: java.util.UUID)

@@ -1,0 +1,18 @@
+     body {
+          font-family: sans-serif!important;
+     }
+     
+     .page-wrapper {
+          border-radius: 6pt;
+     }
+
+     input.ng-submitted.ng-invalid, textarea.ng-submitted.ng-invalid, select.ng-submitted.ng-invalid {
+         background-color:#ffdddc!important;
+         border-color:#630000!important;
+     }
+
+     span.error {
+         color:red!important; 
+     }
+
+     .angular-google-map-container { height: 400px; }

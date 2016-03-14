@@ -1,3 +1,5 @@
+package config
+
 import org.openqa.selenium.WebDriver
 import play.api.test._
 import play.api.{ Application, ApplicationLoader, Environment, Mode, BuiltInComponents, BuiltInComponentsFromContext, Logger }

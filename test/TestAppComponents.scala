@@ -1,4 +1,8 @@
+package config
+
 import services.VesselsService
+
+import services._
 
 trait TestAppComponents extends AppComponents {
 

@@ -1,3 +1,5 @@
+package utils
+
 import org.scalacheck._
 import models._
 

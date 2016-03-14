@@ -1,3 +1,5 @@
+package models
+
 import org.junit.runner.RunWith
 import org.scalatest.{ WordSpecLike, Matchers }
 import org.scalatest.prop.PropertyChecks
@@ -6,10 +8,10 @@ import org.scalacheck._
 import play.api.libs.json._
 import play.api.libs.json.Json._
 import java.util.UUID
+import utils._
 
 class ModelSpec extends WordSpecLike with Matchers with PropertyChecks with CommonGenerators {
 
-  import models._
   implicit override val generatorDrivenConfig = PropertyCheckConfig(minSize = 1, maxSize = 100, minSuccessful = 100, workers = 5)
 
   "A Model" must {

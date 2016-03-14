@@ -53,8 +53,10 @@ class ImportController(vesselsService: VesselsService) extends Controller {
   )
 
   def importDatabase = Action {
+
     val registrySource = Play.getFile("public/vesselsregistry.json")
     val registryJson = Json.parse(new FileInputStream(registrySource))
+
     val result = registryJson match {
       case JsArray(values) => Json.arr(
         for (v <- values) yield {
@@ -77,6 +79,7 @@ class ImportController(vesselsService: VesselsService) extends Controller {
           obj
         })
     }
+
     Ok(result)
   }
 

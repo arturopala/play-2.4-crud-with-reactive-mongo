@@ -1,36 +1,24 @@
+package services
+
 import scala.util.{ Try, Success, Failure }
 import scala.concurrent.{ ExecutionContext, Future }
+import play.api.libs.json._
 
 import models.Identity
-import services.CRUDService
 
 /**
  * Test {{CRUDService}} impl backed by a mutable thread-safe Map
  */
-class TestCRUDService[E, ID](implicit identity: Identity[E, ID])
+class TestCRUDService[E: Format, ID](implicit identity: Identity[E, ID])
     extends CRUDService[E, ID] {
 
   import play.api.libs.json._
 
   val map: scala.collection.mutable.Map[ID, E] = scala.collection.concurrent.TrieMap()
 
-  def read(id: ID)(implicit ec: ExecutionContext): Future[Option[E]] = Future.successful(map.get(id))
-
-  def search(criteria: Map[String, Any], limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] = {
-    criteria.get("$query") match {
-      case None => Future.successful(map.values.filter(matches(criteria)).take(limit))
-      case Some(json: JsObject) => Future.successful(map.values.filter(matches(toCriteria(json))).take(limit))
-      case _ => ???
-    }
-  }
-
-  def search(criteria: JsObject, limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] = {
-    Future.successful(map.values.filter(matches(toCriteria(criteria))).take(limit))
-  }
-
   def create(entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]] = {
-    val criteria = toCriteria(identity.clear(entity))
-    search(criteria, 1).map {
+    val criteria = Json.toJson(identity.clear(entity)).as[JsObject]
+    search(criteria, 1) map {
       case t if t.size > 0 =>
         Right(identity.of(t.head).get)
       case _ =>
@@ -40,6 +28,8 @@ class TestCRUDService[E, ID](implicit identity: Identity[E, ID])
         Right(id)
     }
   }
+
+  def read(id: ID)(implicit ec: ExecutionContext): Future[Option[E]] = Future.successful(map.get(id))
 
   def update(id: ID, entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]] = {
     if (map.contains(id)) {
@@ -55,55 +45,34 @@ class TestCRUDService[E, ID](implicit identity: Identity[E, ID])
     Future.successful(Right(id)) //be idempotent
   }
 
-  def matches(criteria: Map[String, Any])(instance: Any): Boolean = {
-    instance match {
-      case Some(i) => matches(criteria)(i)
-      case _ =>
-        criteria.forall {
-          case (attrName, pattern) =>
-            Try(instance.getClass.getDeclaredField(attrName)) map (f => { f.setAccessible(true); f.get(instance) }) match {
-              case Success(instanceFieldValue) => compare(pattern, instanceFieldValue)
-              case Failure(e) => false
-            }
-        }
+  def search(criteria: JsObject, limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] = {
+    Future.successful(map.values.filter(matches(criteria)).take(limit))
+  }
+
+  def matches[A: Format](criteria: JsObject)(instance: A): Boolean = {
+    matches(criteria, Json.toJson(instance).as[JsObject])
+  }
+
+  def matches(criteria: JsObject, instance: JsObject): Boolean = {
+    val fields = instance.value
+    criteria.fieldSet forall {
+      case (name, jsval) =>
+        fields.get(name) map (compare(jsval, _)) getOrElse false
     }
   }
 
-  def compare(pattern: Any, instance: Any): Boolean = {
-    pattern match {
-      case Some(p) => compare(p, instance)
-      case criteria: Map[String, Any] @unchecked => matches(criteria)(instance)
-      case patterns: Seq[_] => // case when we compare list of values to object
-        Try(instance.getClass.getDeclaredFields()) map (s => s map (f => { f.setAccessible(true); f.get(instance) })) match {
-          case Success(values) => patterns.zip(values).forall { case (p, i) => compare(p, i) }
-          case Failure(e) => false
-        }
-      case p => instance match {
-        case values: Seq[_] if p.isInstanceOf[Seq[_]] => p.asInstanceOf[Seq[_]].zip(values).forall { case (p, i) => compare(p, i) }
-        case Some(i) => p == i
-        case i => p == i
+  def compare(pattern: JsValue, value: JsValue): Boolean = {
+    (pattern, value) match {
+      case (JsNull, JsNull) => true
+      case (JsString(s1), JsString(s2)) => s1 == s2
+      case (JsBoolean(b1), JsBoolean(b2)) => b1 == b2
+      case (JsNumber(n1), JsNumber(n2)) => n1 == n2
+      case (JsArray(seq1), JsArray(seq2)) => seq1.zip(seq2).forall {
+        case (c, i) => compare(c, i)
       }
+      case (c: JsObject, i: JsObject) => matches(c, i)
+      case _ => false
     }
-  }
-
-  def toCriteria(e: E): Map[String, Any] = {
-    Try(e.getClass.getDeclaredFields).map(s => s.map(f => { f.setAccessible(true); (f.getName, f.get(e)) })) match {
-      case Success(coll) => Map(coll: _*) filterNot { case (k, v) => v == null || v == None }
-      case Failure(err) => throw err
-    }
-  }
-
-  def toCriteria(json: JsObject): Map[String, Any] = {
-    toValue(json).asInstanceOf[Map[String, Any]]
-  }
-
-  def toValue: PartialFunction[JsValue, Any] = {
-    case JsNull => null
-    case JsString(s) => s
-    case JsBoolean(b) => b
-    case JsNumber(n) => n
-    case JsArray(seq) => seq.map(toValue)
-    case obj: JsObject => Map(obj.fields.map { case (name, jsValue) => (name, toValue(jsValue)) }: _*)
   }
 
 }

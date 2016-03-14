@@ -1,3 +1,5 @@
+package config
+
 import scala.concurrent.{ ExecutionContext, Future }
 
 import controllers._

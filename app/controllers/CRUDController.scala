@@ -20,11 +20,12 @@ abstract class CRUDController[E: Format, ID](val service: CRUDService[E, ID])(re
   val DEFAULT_LIMIT = Seq("50")
 
   def create = Action.async(parse.json) { implicit request =>
-    parseValidateAndProcess[E] { entity =>
-      service.create(entity).map {
-        case Right(id) => Created.withHeaders(LOCATION -> redirectUrl(id).url)
-        case Left(err) => BadRequest(err)
-      }
+    validateAndThen[E] {
+      entity =>
+        service.create(entity).map {
+          case Right(id) => Created.withHeaders(LOCATION -> redirectUrl(id).url)
+          case Left(err) => BadRequest(err)
+        }
     }
   }
 
@@ -37,11 +38,12 @@ abstract class CRUDController[E: Format, ID](val service: CRUDService[E, ID])(re
   }
 
   def update(id: ID) = Action.async(parse.json) { implicit request =>
-    parseValidateAndProcess[E] { entity =>
-      service.update(id, entity).map {
-        case Right(id) => Ok.withHeaders(LOCATION -> redirectUrl(id).url)
-        case Left(err) => BadRequest(err)
-      }
+    validateAndThen[E] {
+      entity =>
+        service.update(id, entity).map {
+          case Right(id) => Ok.withHeaders(LOCATION -> redirectUrl(id).url)
+          case Left(err) => BadRequest(err)
+        }
     }
   }
 
@@ -52,7 +54,7 @@ abstract class CRUDController[E: Format, ID](val service: CRUDService[E, ID])(re
     }
   }
 
-  def parseValidateAndProcess[T: Reads](t: T => Future[Result])(implicit request: Request[JsValue]) = {
+  def validateAndThen[T: Reads](t: T => Future[Result])(implicit request: Request[JsValue]) = {
     request.body.validate[T].map(t) match {
       case JsSuccess(result, _) => result
       case JsError(err) => Future.successful(BadRequest(Json.toJson(err.map {
@@ -60,8 +62,6 @@ abstract class CRUDController[E: Format, ID](val service: CRUDService[E, ID])(re
       })))
     }
   }
-
-  def parseJsonParam(param: String)(implicit request: Request[Any]): (String, Try[JsValue]) = (param, Try(request.queryString.get(param).map(_.head).map(Json.parse(_)).getOrElse(Json.obj())))
 
   def toError(t: (String, Try[JsValue])): JsObject = t match {
     case (paramName, Failure(e)) => Json.obj(paramName -> e.getMessage)

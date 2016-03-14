@@ -1,3 +1,5 @@
+package services
+
 import java.util.UUID
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -12,6 +14,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.junit.JUnitRunner
 import org.scalacheck._
+import utils._
 
 class TestCRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks with CommonGenerators with ScalaFutures {
 
@@ -21,24 +24,20 @@ class TestCRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks
   "A TestCRUDService" must {
 
     val identity = Vessel.VesselIdentity
-    val service = new TestCRUDService[Vessel, UUID]
 
-    "allow testing creation, finding, updating and deletion of entities" in {
+    /*"allow testing creation, finding, updating and deletion of entities" in {
       forAll(VesselGenerator) { (vessel: Vessel) =>
-        // should create new entity and assign id
-        val id: UUID = service.create(vessel).futureValue.right.get
-        // should not create another entity with same values except id
-        service.create(vessel).futureValue shouldBe Right(id)
+        
         // should find existing entity by id
         service.read(id).futureValue.get.copy(uuid = None) should be(vessel)
         // should find existing entity by id criteria
-        val found = service.search(Map("uuid" -> id), 2).futureValue
+        val found = service.search(Json.obj("uuid" -> id), 2).futureValue
         found should have size 1 // uuid must be unique
         found.head.copy(uuid = None) should be(vessel)
         // should find existing entity by multiple criteria
-        service.search(Map("name" -> vessel.name, "width" -> vessel.width, "length" -> vessel.length), 2).futureValue.head.copy(uuid = None) should be(vessel)
+        service.search(Json.obj("name" -> vessel.name, "width" -> vessel.width, "length" -> vessel.length), 2).futureValue.head.copy(uuid = None) should be(vessel)
         // should find existing entity by json query
-        service.search(Map("$query" -> Json.toJson(vessel)), 2).futureValue.head.copy(uuid = None) should be(vessel)
+        service.search(Json.toJson(vessel).as[JsObject], 2).futureValue.head.copy(uuid = None) should be(vessel)
         // create variant of vessel
         val vessel2 = vessel.copy(name = vessel.name.reverse, width = vessel.width + 5, length = vessel.length - 1, uuid = None)
         // should update existing entity
@@ -50,7 +49,7 @@ class TestCRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks
         // should not find by id when removed
         service.read(id).futureValue shouldBe None
         // should not find by criteria when removed
-        service.search(Map("name" -> vessel.name, "width" -> vessel.width, "length" -> vessel.length), 2).futureValue should be('empty)
+        service.search(Json.obj("name" -> vessel.name, "width" -> vessel.width, "length" -> vessel.length), 2).futureValue should be('empty)
         // should confirm deletion even when removed (idempotent)
         service.delete(id).futureValue shouldBe Right(id)
         // should not confirm update nor create new when removed
@@ -62,21 +61,37 @@ class TestCRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks
         // should not find by id after re-creation
         service.read(id).futureValue shouldBe None
       }
-    }
-  }
+    }*/
 
-  "A CriteriaJSONWriter" must {
-    import play.api.libs.json._
-    import services.CriteriaJSONWriter
-
-    "serialize criteria to bson" in {
-      CriteriaJSONWriter.writes(Map("id" -> 5)) should be(Json.obj("id" -> 5))
-      CriteriaJSONWriter.writes(Map("id" -> "abc")) should be(Json.obj("id" -> "abc"))
-      CriteriaJSONWriter.writes(Map("id" -> 473473278747324L)) should be(Json.obj("id" -> 473473278747324L))
-      CriteriaJSONWriter.writes(Map("id" -> 678.7634734)) should be(Json.obj("id" -> 678.7634734))
-      CriteriaJSONWriter.writes(Map("id" -> false)) should be(Json.obj("id" -> false))
-      CriteriaJSONWriter.writes(Map("$query" -> Json.obj("id" -> Json.obj("$regex" -> "sd.*?")))) should be(Json.obj("$query" -> Json.obj("id" -> Json.obj("$regex" -> "sd.*?"))))
+    "not find existing instance for new entities" in {
+      val service = new TestCRUDService[Vessel, UUID]
+      forAll(VesselGenerator) { (vessel: Vessel) =>
+        service.search(Json.toJson(vessel).as[JsObject], 1).futureValue shouldBe List()
+      }
     }
 
+    "create new entitity" in {
+      val service = new TestCRUDService[Vessel, UUID]
+      forAll(VesselGenerator) { (vessel: Vessel) =>
+        val id: UUID = service.create(vessel).futureValue.right.get
+        id should not be null
+      }
+    }
+
+    "create entity only once for the same id" in {
+      val service = new TestCRUDService[Vessel, UUID]
+      forAll(VesselGenerator) { (vessel: Vessel) =>
+        val id: UUID = service.create(vessel).futureValue.right.get
+        service.create(vessel).futureValue shouldBe Right(id)
+      }
+    }
+
+    "find existing entity by id" in {
+      val service = new TestCRUDService[Vessel, UUID]
+      forAll(VesselGenerator) { (vessel: Vessel) =>
+        val id: UUID = service.create(vessel).futureValue.right.get
+        service.read(id).futureValue.get.copy(uuid = None) shouldBe vessel
+      }
+    }
   }
 }

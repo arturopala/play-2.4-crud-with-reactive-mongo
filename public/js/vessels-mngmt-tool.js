@@ -18,8 +18,8 @@ angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
         update: function(vessel){
             return $http.put('/vessels/'+vessel.uuid, vessel);
         },
-        search: function(criteria){
-            return $http.get('/vessels?query='+JSON.stringify(criteria), {cache: false});
+        search: function(query){
+            return $http.post('/vessels/search', query, {cache: false});
         },
         delete: function(vessel){
             return $http.delete('/vessels/'+vessel.uuid);
@@ -48,7 +48,7 @@ angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
       }
     };
 
-    var Criteria = {
+    /*var Criteria = {
       addPrefix: function(criteria,field,model,form){
         if(form[field] && model[field]) criteria[field] = {"$regex": '^'+model[field]+'.*',"$options":"i"}
       },
@@ -62,13 +62,13 @@ angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
           criteria['$and'] = [gt,lt]
         }
       }
-    }
+    }*/
 
     $scope.search = function(){
       PageState.busy = "searching";
       PageState.vessel = undefined;
       PageState.listing = [];
-      var q1 = {}; var q2 = {}; var q3 = {}; var q4 = {};
+      /*var q1 = {}; var q2 = {}; var q3 = {}; var q4 = {};
       Criteria.addRegex(q1,"name",$scope.vessel,$scope.vesselForm)
       Criteria.addRange(q1,"width",2,$scope.vessel,$scope.vesselForm)
       Criteria.addRegex(q2,"name",$scope.vessel,$scope.vesselForm)
@@ -76,8 +76,9 @@ angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
       Criteria.addRegex(q3,"name",$scope.vessel,$scope.vesselForm)
       Criteria.addRange(q3,"draft",2,$scope.vessel,$scope.vesselForm)
       Criteria.addPrefix(q4,"name",$scope.vessel,$scope.vesselForm)
-      var criteria = {"$or":[q4,q1,q2,q3]}
-      VesselsService.search(criteria).success(function(data, status, headers){
+      var criteria = {"$or":[q4,q1,q2,q3]}*/
+      var query = {name: $scope.vessel.name}
+      VesselsService.search(query).success(function(data, status, headers){
           if(status==200) {
           	if(angular.isArray(data)){
           		if(data.length == 1){
