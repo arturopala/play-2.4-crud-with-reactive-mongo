@@ -2,7 +2,7 @@
 
 #Seed for Play Framework 2.4 CRUD application with Macwire, ReactiveMongo and AngularJS
 
-This app is deployed on Heroku: <https://gentle-fortress-7896.herokuapp.com/>
+This app is deployed on Heroku: <https://play24-crud-with-mongo.herokuapp.com/>
 
 ###run
 
