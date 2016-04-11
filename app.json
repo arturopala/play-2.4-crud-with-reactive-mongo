@@ -1,5 +1,5 @@
 {
-  "name": "play-2.4-crud-with-reactive-mongo",
+  "name": "play-2.4-crud-with-mongo",
   "description": "Generic Play 2.4 CRUD with Macwire and ReactiveMongo",
   "repository": "https://github.com/arturopala/play-2.4-crud-with-reactive-mongo",
   "keywords": ["scala", "play", "reactivemongo", "angular", "macwire"]
