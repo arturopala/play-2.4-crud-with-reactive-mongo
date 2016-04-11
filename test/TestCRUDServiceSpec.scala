@@ -63,10 +63,10 @@ class TestCRUDServiceSpec extends WordSpecLike with Matchers with PropertyChecks
       }
     }*/
 
-    "not find existing instance for new entities" in {
+    "not find existing instance for new entity" in {
       val service = new TestCRUDService[Vessel, UUID]
       forAll(VesselGenerator) { (vessel: Vessel) =>
-        service.search(Json.toJson(vessel).as[JsObject], 1).futureValue shouldBe List()
+        service.search(Json.toJson(vessel).as[JsObject], 1).futureValue shouldBe empty
       }
     }
 

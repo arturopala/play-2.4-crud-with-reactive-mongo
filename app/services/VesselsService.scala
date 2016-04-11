@@ -13,8 +13,11 @@ object SearchQuery {
 
 trait VesselsService extends CRUDService[Vessel, UUID] {
 
+  import utils.Criteria._
+
   def search(query: SearchQuery, limit: Int)(implicit ec: ExecutionContext): Future[Traversable[Vessel]] = {
-    search(Json.obj("name" -> query.name), limit)
+    val criteria = Op("name", Regex("^.*?" + query.name + ".*$", Some("i")))
+    search(criteria, limit)
   }
 
 }

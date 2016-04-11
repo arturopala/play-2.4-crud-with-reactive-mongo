@@ -73,7 +73,8 @@ class ModelSpec extends WordSpecLike with Matchers with PropertyChecks with Comm
             v.draft should be(d)
             v.lastSeenPosition should be(p)
             val json = Json.obj(
-              "uuid" -> id, "name" -> JsString(n), "width" -> JsNumber(w), "length" -> JsNumber(l), "draft" -> JsNumber(d))
+              "uuid" -> id, "name" -> JsString(n), "width" -> JsNumber(w), "length" -> JsNumber(l), "draft" -> JsNumber(d)
+            )
             toJson(v) should be(p.fold(json)(p => json + ("lastSeenPosition" -> toJson(p))))
             parse(s"""{"width":$w, "length":$l, "uuid":"$id", "name":"$n", """ +
               p.fold("")(p => s""""lastSeenPosition":${stringify(toJson(p))}, """) +

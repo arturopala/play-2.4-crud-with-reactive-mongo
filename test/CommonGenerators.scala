@@ -9,7 +9,7 @@ trait CommonGenerators {
   val TimeGenerator = Gen.chooseNum(0L, Long.MaxValue)
   val LatLngGenerator = for { lat <- LatGenerator; lng <- LngGenerator } yield LatLng(lat, lng)
   val PositionGenerator = Gen.option(for { l <- LatLngGenerator; t <- TimeGenerator } yield Position(l, t))
-  val NameGenerator = Gen.alphaStr
+  val NameGenerator = Gen.alphaStr.map(n => n + "z")
   val DoubleGenerator = Gen.chooseNum(0d, 1000d) suchThat (_ > 0)
   val VesselGenerator = for (n <- NameGenerator; w <- DoubleGenerator; l <- DoubleGenerator; d <- DoubleGenerator; p <- PositionGenerator) yield Vessel(None, n, w, l, d, p)
 }

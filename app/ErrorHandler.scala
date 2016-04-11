@@ -10,7 +10,8 @@ class ErrorHandler(
     env: Environment,
     config: Configuration,
     sourceMapper: Option[SourceMapper],
-    router: Router) extends DefaultHttpErrorHandler(env, config, sourceMapper, Option(router)) {
+    router: Router
+) extends DefaultHttpErrorHandler(env, config, sourceMapper, Option(router)) {
 
   override def onProdServerError(request: RequestHeader, exception: UsefulException) = {
     Future.successful(

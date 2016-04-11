@@ -32,3 +32,9 @@ project/plugins/project/
 
 # added by GitSavvy
 /project/sbt-ui.sbt
+
+# added by GitSavvy
+/.ensime
+
+# added by GitSavvy
+/.ensime_cache/

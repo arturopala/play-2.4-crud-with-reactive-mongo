@@ -33,8 +33,7 @@ abstract class CRUDController[E: Format, ID](val service: CRUDService[E, ID])(re
     service.read(id).map(_.fold(
       NotFound(s"Entity #$id not found")
     )(entity =>
-        Ok(Json.toJson(entity)))
-    )
+        Ok(Json.toJson(entity))))
   }
 
   def update(id: ID) = Action.async(parse.json) { implicit request =>

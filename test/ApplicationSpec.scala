@@ -1,19 +1,17 @@
 package controllers
 
-import org.junit.runner.RunWith
-import org.scalatest.{ WordSpecLike, Matchers }
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.prop.PropertyChecks
-import org.scalatest.junit.JUnitRunner
+import java.util.UUID
+
+import config.WithTestApplication
+import models._
 import org.scalacheck._
+import org.scalatest.{ Matchers, WordSpecLike }
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.prop.PropertyChecks
 import play.api.libs.json._
 import play.api.libs.json.Json._
-import java.util.UUID
-import scala.concurrent.duration.Duration
 import play.api.test._
-import models._
-import syntax._
-import config.WithTestApplication
 
 class ApplicationSpec extends WordSpecLike with Matchers with PropertyChecks with utils.CommonGenerators with ScalaFutures {
 
@@ -100,7 +98,7 @@ class ApplicationSpec extends WordSpecLike with Matchers with PropertyChecks wit
       forAll(VesselGenerator) {
         vessel: Vessel =>
           createVessel(vessel) map { uuid =>
-            val query = Json.toJson(services.SearchQuery(vessel.name))
+            val query = Json.toJson(services.SearchQuery("^.*?" + vessel.name.drop(1) + "$"))
             val findByCiteriaRequest = FakeRequest(POST, s"/vessels/search").withJsonBody(query)
             val findByCiteriaResponse = route(findByCiteriaRequest).get
             status(findByCiteriaResponse) should be(OK)

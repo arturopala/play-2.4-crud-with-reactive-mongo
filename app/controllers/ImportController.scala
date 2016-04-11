@@ -77,7 +77,8 @@ class ImportController(vesselsService: VesselsService) extends Controller {
               }
           }
           obj
-        })
+        }
+      )
     }
 
     Ok(result)
