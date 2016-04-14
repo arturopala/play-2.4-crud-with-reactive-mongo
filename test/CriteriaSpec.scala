@@ -20,46 +20,60 @@ class CriteriaSpec extends WordSpecLike with Matchers with PropertyChecks with J
 
   "A Criteria" must {
 
-    "parse empty json object as Always criteria" in {
+    "parse empty json object as an Always criteria" in {
       val query = Json.obj()
-      Criteria(query) shouldBe Success(Criteria.Always)
+      Criteria(query) shouldBe Success(Always)
     }
 
-    "parse simple json object as Eq criteria" in {
+    "parse simple json object as an Eq criteria" in {
       forAll(name, jsValue) { (name: String, value: JsValue) =>
         val query = Json.obj(name -> value)
-        Criteria(query) shouldBe Success(Criteria.Eq(name, value))
+        Criteria(query) shouldBe Success(Eq(name, value))
       }
     }
 
-    "parse complex json object as an Eq or ImplicitAnd criteria" in {
+    "parse complex json object as an ImplicitAnd criteria" in {
       forAll(complexJsonObject) { (json: JsObject) =>
         whenever(json.fields.size > 1) {
           (Criteria(json) match {
-            case Success(Criteria.ImplicitAnd(_, _)) => true
+            case Success(ImplicitAnd(_, _)) => true
             case x => false
           }) shouldBe true
         }
       }
     }
 
-    "parse $regex query operator as a Regex criteria when valid expression" in {
+    "parse complex json query expression as a criteria" in {
+      val query = Json.parse("""{"$and":[{"a":"foo"},{"b":{"c":15.189}},{"$or":[{"d":true},{"d":{"$gt":66316263}}]}]}""")
+      Criteria(query.as[JsObject]) shouldBe Success(
+        And(
+          Eq("a", "foo"),
+          Eq("b", Json.obj("c" -> 15.189)),
+          Or(
+            Eq("d", true),
+            If("d" -> Gt(66316263))
+          )
+        )
+      )
+    }
+
+    "parse $regex query operator as a Regex constraint when valid expression" in {
       forAll(name) { (name: String) =>
         val regex = "^foo.*"
         val query = Json.obj(name -> Json.obj("$regex" -> regex))
-        Criteria(query) shouldBe Success(Op(name, Regex(regex, None)))
+        Criteria(query) shouldBe Success(If(name, Regex(regex, None)))
       }
     }
 
-    "parse $regex with $options query operator as a Regex criteria when valid expression" in {
+    "parse $regex with $options query operator as a Regex constraint when valid expression" in {
       forAll(name) { (name: String) =>
         val regex = "^foo.*"
         val query = Json.obj(name -> Json.obj("$regex" -> regex, "$options" -> name))
-        Criteria(query) shouldBe Success(Op(name, Regex(regex, Some(name))))
+        Criteria(query) shouldBe Success(If(name, Regex(regex, Some(name))))
       }
     }
 
-    "not parse $regex query operator as a Regex criteria when invalid expression" in {
+    "not parse $regex query operator as a Regex constraint when invalid expression" in {
       forAll(name) { (name: String) =>
         val regex = "***"
         val query = Json.obj(name -> Json.obj("$regex" -> regex))
@@ -71,7 +85,7 @@ class CriteriaSpec extends WordSpecLike with Matchers with PropertyChecks with J
       forAll(name, simpleJsonObject, complexJsonObject, simpleJsonObject) {
         (name: String, obj1: JsObject, obj2: JsObject, obj3: JsObject) =>
           val query = Json.obj("$or" -> JsArray(Seq(Json.obj(name -> obj1), Json.obj(name -> obj2), Json.obj(name -> obj3))))
-          Criteria(query) shouldBe Success(Criteria.Or(Criteria.Eq(name, obj1), Criteria.Eq(name, obj2), Criteria.Eq(name, obj3)))
+          Criteria(query) shouldBe Success(Or(Eq(name, obj1), Eq(name, obj2), Eq(name, obj3)))
       }
     }
 
@@ -93,7 +107,7 @@ class CriteriaSpec extends WordSpecLike with Matchers with PropertyChecks with J
       forAll(name, simpleJsonObject, complexJsonObject, simpleJsonObject) {
         (name: String, obj1: JsObject, obj2: JsObject, obj3: JsObject) =>
           val query = Json.obj("$and" -> JsArray(Seq(Json.obj(name -> obj1), Json.obj(name -> obj2), Json.obj(name -> obj3))))
-          Criteria(query) shouldBe Success(Criteria.And(Criteria.Eq(name, obj1), Criteria.Eq(name, obj2), Criteria.Eq(name, obj3)))
+          Criteria(query) shouldBe Success(And(Eq(name, obj1), Eq(name, obj2), Eq(name, obj3)))
       }
     }
 
@@ -110,17 +124,52 @@ class CriteriaSpec extends WordSpecLike with Matchers with PropertyChecks with J
         Criteria(query) should matchPattern { case Failure(_) => }
       }
     }
+
+    "parse $ne query operator as a Ne constraint" in {
+      forAll(name, jsValue) { (name: String, value: JsValue) =>
+        val query = Json.obj(name -> Json.obj("$ne" -> value))
+        Criteria(query) shouldBe Success(If(name, Ne(value)))
+      }
+    }
+
+    "parse $lt query operator as a Lt constraint" in {
+      forAll(name, jsValue) { (name: String, value: JsValue) =>
+        val query = Json.obj(name -> Json.obj("$lt" -> value))
+        Criteria(query) shouldBe Success(If(name, Lt(value)))
+      }
+    }
+
+    "parse $gt query operator as a Gt constraint" in {
+      forAll(name, jsValue) { (name: String, value: JsValue) =>
+        val query = Json.obj(name -> Json.obj("$gt" -> value))
+        Criteria(query) shouldBe Success(If(name, Gt(value)))
+      }
+    }
+
+    "parse $lte query operator as a Lte constraint" in {
+      forAll(name, jsValue) { (name: String, value: JsValue) =>
+        val query = Json.obj(name -> Json.obj("$lte" -> value))
+        Criteria(query) shouldBe Success(If(name, Lte(value)))
+      }
+    }
+
+    "parse $gte query operator as a Gte constraint" in {
+      forAll(name, jsValue) { (name: String, value: JsValue) =>
+        val query = Json.obj(name -> Json.obj("$gte" -> value))
+        Criteria(query) shouldBe Success(If(name, Gte(value)))
+      }
+    }
   }
 
-  "An Eq criteria" must {
+  "An Eq (implicit equality) criteria" must {
 
-    "match equality between simple json document parsed as a criteria and itself" in {
+    "match equality between simple json document parsed as an equality criteria and itself" in {
       forAll(simpleJsonObject) { (json: JsObject) =>
         Criteria(json).matches(json) shouldBe true
       }
     }
 
-    "match equality between complex json document parsed as a criteria and itself" in {
+    "match equality between complex json document parsed as a set of implicit equality criteria and itself" in {
       forAll(complexJsonObject) { (json: JsObject) =>
         whenever(json.fields.size > 0) {
           Criteria(json).matches(json) shouldBe true
@@ -128,7 +177,43 @@ class CriteriaSpec extends WordSpecLike with Matchers with PropertyChecks with J
       }
     }
 
-    "match equality when query consists of a single field present in the document" in {
+    "match equality when field present in the flat document" in {
+      forAll(name, jsValue, complexJsonObject) { (name: String, value: JsValue, json: JsObject) =>
+        val document = json ++ Json.obj(name -> value)
+        val query = Json.obj(name -> value)
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "match when field present in the deeply nested document" in {
+      forAll(name, jsValue, complexJsonObject) { (name: String, value: JsValue, json: JsObject) =>
+        whenever(!name.isEmpty()) {
+          val document = Json.obj("a" -> Json.obj("b" -> Json.obj("c" -> (json ++ Json.obj(name -> value)))))
+          val query = Json.obj(s"a.b.c.$name" -> value)
+          Criteria(query).matches(document) shouldBe true
+        }
+      }
+    }
+
+    "not match when field not found in the flat document" in {
+      forAll(name, jsValue, complexJsonObject) { (name: String, value: JsValue, json: JsObject) =>
+        val document = json ++ Json.obj(name -> value)
+        val query = Json.obj(s"_$name" -> value)
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "not match when field not found in the deeply nested document" in {
+      forAll(name, jsValue, complexJsonObject) { (name: String, value: JsValue, json: JsObject) =>
+        whenever(!name.isEmpty()) {
+          val document = Json.obj("a" -> Json.obj("b" -> Json.obj("c" -> (json ++ Json.obj(name -> value)))))
+          val query = Json.obj(s"b.c.$name" -> value)
+          Criteria(query).matches(document) shouldBe false
+        }
+      }
+    }
+
+    "match equality when query consists of a single field already present in the document" in {
       forAll(complexJsonObject, name, jsValue) { (json: JsObject, name: String, value: JsValue) =>
         val query = Json.obj(name -> value)
         val document = json ++ query
@@ -143,7 +228,7 @@ class CriteriaSpec extends WordSpecLike with Matchers with PropertyChecks with J
       }
     }
 
-    "match equality when query is a subset of the document" in {
+    "match equality when query expression is a subset of the document" in {
       forAll(complexJsonObject, complexJsonObject) { (query: JsObject, base: JsObject) =>
         whenever(base.fields.size > 0 && query.fields.size > 0) {
           val document = base ++ query
@@ -152,7 +237,7 @@ class CriteriaSpec extends WordSpecLike with Matchers with PropertyChecks with J
       }
     }
 
-    "not match equality when query is not a subset of the document" in {
+    "not match equality when query expression is not a subset of the document" in {
       forAll(complexJsonObject, complexJsonObject) { (query: JsObject, base: JsObject) =>
         whenever(base.fields.size > 0 && query.fields.size > 0) {
           val document = base ++ query
@@ -168,6 +253,102 @@ class CriteriaSpec extends WordSpecLike with Matchers with PropertyChecks with J
         }
       }
     }
+  }
+
+  "An EEq (explicit equality) constraint" must {
+
+    "match when field value matches in the flat document" in {
+      forAll(name, jsValue, complexJsonObject) { (name: String, value: JsValue, json: JsObject) =>
+        val document = json ++ Json.obj(name -> value)
+        val query = Json.obj(name -> Json.obj("$eq" -> value))
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "match when field value matches in the deeply nested document" in {
+      forAll(name, jsValue, complexJsonObject) { (name: String, value: JsValue, json: JsObject) =>
+        whenever(!name.isEmpty()) {
+          val document = Json.obj("a" -> Json.obj("b" -> Json.obj("c" -> (json ++ Json.obj(name -> value)))))
+          val query = Json.obj(s"a.b.c.$name" -> Json.obj("$eq" -> value))
+          Criteria(query).matches(document) shouldBe true
+        }
+      }
+    }
+
+    "not match when field not found in the flat document" in {
+      forAll(name, jsValue, complexJsonObject) { (name: String, value: JsValue, json: JsObject) =>
+        val document = json ++ Json.obj(name -> value)
+        val query = Json.obj(s"_$name" -> Json.obj("$eq" -> value))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "not match when field not found in the deeply nested document" in {
+      forAll(name, jsValue, complexJsonObject) { (name: String, value: JsValue, json: JsObject) =>
+        whenever(!name.isEmpty()) {
+          val document = Json.obj("a" -> Json.obj("b" -> Json.obj("c" -> (json ++ Json.obj(name -> value)))))
+          val query = Json.obj(s"a.b.$name" -> Json.obj("$eq" -> value))
+          Criteria(query).matches(document) shouldBe false
+        }
+      }
+    }
+
+    "not match when field has different value" in {
+      forAll(name, complexJsonObject) { (name: String, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsString("foo"))
+        val query = Json.obj(name -> Json.obj("$eq" -> JsString("bar")))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+  }
+
+  "A Ne constraint" must {
+
+    "match when field has different value" in {
+      forAll(name, complexJsonObject) { (name: String, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsString("foo"))
+        val query = Json.obj(name -> Json.obj("$ne" -> JsString("bar")))
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "not match when field value matches in the flat document" in {
+      forAll(name, jsValue, complexJsonObject) { (name: String, value: JsValue, json: JsObject) =>
+        val document = json ++ Json.obj(name -> value)
+        val query = Json.obj(name -> Json.obj("$ne" -> value))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "not match when field value matches in the deeply nested document" in {
+      forAll(name, jsValue, complexJsonObject) { (name: String, value: JsValue, json: JsObject) =>
+        whenever(!name.isEmpty()) {
+          val document = Json.obj("a" -> Json.obj("b" -> Json.obj("c" -> (json ++ Json.obj(name -> value)))))
+          val query = Json.obj(s"a.b.c.$name" -> Json.obj("$ne" -> value))
+          Criteria(query).matches(document) shouldBe false
+        }
+      }
+    }
+
+    "not match when field not found in the flat document" in {
+      forAll(name, jsValue, complexJsonObject) { (name: String, value: JsValue, json: JsObject) =>
+        val document = json ++ Json.obj(name -> value)
+        val query = Json.obj(s"_$name" -> Json.obj("$ne" -> value))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "not match when field not found in the deeply nested document" in {
+      forAll(name, jsValue, complexJsonObject) { (name: String, value: JsValue, json: JsObject) =>
+        whenever(!name.isEmpty()) {
+          val document = Json.obj("a" -> Json.obj("b" -> Json.obj("c" -> (json ++ Json.obj(name -> value)))))
+          val query = Json.obj(s"a.b.$name" -> Json.obj("$ne" -> value))
+          Criteria(query).matches(document) shouldBe false
+        }
+      }
+    }
+
   }
 
   "An And criteria" must {
@@ -220,18 +401,25 @@ class CriteriaSpec extends WordSpecLike with Matchers with PropertyChecks with J
     "not match when none criteria are met" in {
       forAll(simpleJsonObject, simpleJsonObject, simpleJsonObject) { (obj1: JsObject, obj2: JsObject, obj3: JsObject) =>
         whenever(obj1.keys != obj2.keys && obj1.keys != obj3.keys && obj2.keys != obj3.keys) {
-          val query1 = Json.obj("$and" -> Json.arr(obj2))
+          val query1 = Json.obj("$or" -> Json.arr(obj2))
           Criteria(query1).matches(obj1 ++ obj3) shouldBe false
-          val query2 = Json.obj("$and" -> Json.arr(obj3))
+          val query2 = Json.obj("$or" -> Json.arr(obj3))
           Criteria(query2).matches(obj1 ++ obj2) shouldBe false
-          val query3 = Json.obj("$and" -> Json.arr(obj1))
+          val query3 = Json.obj("$or" -> Json.arr(obj1))
           Criteria(query3).matches(obj2 ++ obj3) shouldBe false
         }
       }
     }
+
+    "not match when document is empty" in {
+      forAll(simpleJsonObject) { (obj1: JsObject) =>
+        val query = Json.obj("$or" -> Json.arr(obj1))
+        Criteria(query).matches(Json.obj()) shouldBe false
+      }
+    }
   }
 
-  "An Regex criteria" must {
+  "A Regex constraint" must {
 
     "match string value by prefix" in {
       forAll(name, string) { (name: String, value: String) =>
@@ -282,7 +470,7 @@ class CriteriaSpec extends WordSpecLike with Matchers with PropertyChecks with J
     }
   }
 
-  "An Not criteria" must {
+  "A Not constraint" must {
 
     "match when field does not exist" in {
       val document = Json.obj("foo" -> "bar")
@@ -313,6 +501,146 @@ class CriteriaSpec extends WordSpecLike with Matchers with PropertyChecks with J
         val (name, value) = field
         val document = Json.obj(name -> value)
         val query = Json.obj(name -> Json.obj("$not" -> Json.obj("$eq" -> value)))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+  }
+
+  "A Lt constraint" must {
+
+    "match when field value is less then constraint" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number - 1))
+        val query = Json.obj(name -> Json.obj("$lt" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "not match when field value is equal to constraint" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number))
+        val query = Json.obj(name -> Json.obj("$lt" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "not match when field value is greater than constraint" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number + 1))
+        val query = Json.obj(name -> Json.obj("$lt" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "not match when field not found in the document" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number - 1))
+        val query = Json.obj(s"_$name" -> Json.obj("$lt" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+  }
+
+  "A Gt constraint" must {
+
+    "not match when field value is less then constraint" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number - 1))
+        val query = Json.obj(name -> Json.obj("$gt" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "not match when field value is equal to constraint" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number))
+        val query = Json.obj(name -> Json.obj("$gt" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "match when field value is greater than constraint" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number + 1))
+        val query = Json.obj(name -> Json.obj("$gt" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "not match when field not found in the document" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number - 1))
+        val query = Json.obj(s"_$name" -> Json.obj("$gt" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+  }
+
+  "A Lte constraint" must {
+
+    "match when field value is less then constraint" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number - 1))
+        val query = Json.obj(name -> Json.obj("$lte" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "match when field value is equal to constraint" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number))
+        val query = Json.obj(name -> Json.obj("$lte" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "not match when field value is greater than constraint" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number + 1))
+        val query = Json.obj(name -> Json.obj("$lte" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "not match when field not found in the document" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number - 1))
+        val query = Json.obj(s"_$name" -> Json.obj("$lte" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+  }
+
+  "A Gte constraint" must {
+
+    "not match when field value is less then constraint" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number - 1))
+        val query = Json.obj(name -> Json.obj("$gte" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "match when field value is equal to constraint" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number))
+        val query = Json.obj(name -> Json.obj("$gte" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "match when field value is greater than constraint" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number + 1))
+        val query = Json.obj(name -> Json.obj("$gte" -> JsNumber(number)))
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "not match when field not found in the document" in {
+      forAll(name, integer, complexJsonObject) { (name: String, number: Int, json: JsObject) =>
+        val document = json ++ Json.obj(name -> JsNumber(number - 1))
+        val query = Json.obj(s"_$name" -> Json.obj("$gte" -> JsNumber(number)))
         Criteria(query).matches(document) shouldBe false
       }
     }

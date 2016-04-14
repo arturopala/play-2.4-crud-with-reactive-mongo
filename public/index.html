@@ -26,31 +26,34 @@
                         <div class="grid gutter-horizontal-l">
                             <div class="grid-item desk-one-half lap-one-whole">
                                 <label for="vesselname">Name:</label>
-                                <input id="vesselname" class="input-text" required 
-                                       type="text" ng-model="vessel.name" 
+                                <input id="vesselname" class="input-text" required
+                                       type="text" ng-model="vessel.name" ng-min="3" 
                                        name="name" placeholder="name of the vessel">
                             </div>
                             <div class="grid-item desk-one-sixth lap-one-third">
-                                <label for="vessellength">Length: [m]</label>
+                                <label for="vessellength">OR ( Length: [m]</label>
                                 <input id="vessellength" class="input-text align-center" required
                                        type="number" ng-model="vessel.length" min="1" step="1"
                                        name="length" placeholder="length">
                              </div>
                             <div class="grid-item desk-one-sixth lap-one-third">
-                                <label for="vesselwidth">Width: [m]</label>
+                                <label for="vesselwidth">AND Width: [m]</label>
                                 <input id="vesselwidth" class="input-text align-center" required
                                        type="number" ng-model="vessel.width" min="1" step="0.1"
                                        name="width" placeholder="width">
                            </div>
                             <div class="grid-item desk-one-sixth lap-one-third">
-                                <label for="vesseldraft">Draft: [m]</label>
-                                <input id="vesseldraft" class="input-text align-center" required
-                                       type="number" ng-model="vessel.draft" min="1" step="0.1"
-                                       name="draft" placeholder="draft">
+                                <label for="vesseldraft">AND Draft: [m] )</label>
+                                <div style="white-space:nowrap">
+                                  <input id="vesseldraft" class="input-text align-center" required
+                                         type="number" ng-model="vessel.draft" min="1" step="0.1"
+                                         name="draft" placeholder="draft">
+                                   <span></span>
+                                </div>
                            </div>
                         </div>
                     </fieldset>
-                    <fieldset ng-show="vesselForm.$dirty && vesselForm.$valid">
+                    <fieldset>
                         <div class="grid gutter-l float-right">
                             <button id="searchvessels" type="submit" class="button-secondary" ng-click="search()">
                                 <span class="fa fa-search"/>
@@ -212,10 +215,12 @@
       </div>
     </div>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.16/angular.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.16/angular-route.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.9.3/lodash.min.js"></script>
-    <script src="https://rawgit.com/angular-ui/angular-google-maps/2.1.5/dist/angular-google-maps.min.js"></script>
+    <script src='//maps.googleapis.com/maps/api/js?sensor=false'></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-route.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.11.1/lodash.min.js"></script>
+    <script src="https://cdn.rawgit.com/nmccready/angular-simple-logger/master/dist/angular-simple-logger.js"></script>
+    <script src="https://cdn.rawgit.com/angular-ui/angular-google-maps/master/dist/angular-google-maps.min.js"></script>
     <script src="/assets/js/vessels-mngmt-tool.js"></script>
 </body>
 </html>

@@ -19,8 +19,8 @@ trait JsonGenerators {
   }
 
   val string = Gen.alphaStr
-  val integer = Gen.chooseNum[Int](Int.MinValue, Int.MaxValue)
-  val float = Gen.chooseNum[Float](Float.MinValue, Float.MaxValue)
+  val integer = Gen.chooseNum[Int](Int.MinValue + 1, Int.MaxValue - 1)
+  val float = Gen.chooseNum[Float](Float.MinValue + 1, Float.MaxValue - 1)
   val boolean = Gen.oneOf(true, false)
   val primitives = Gen.oneOf(string, integer, float, boolean)
   val arrays = Gen.oneOf(Gen.listOf(string), Gen.listOf(integer), Gen.listOf(float), Gen.listOf(boolean))

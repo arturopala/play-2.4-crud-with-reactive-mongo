@@ -98,7 +98,7 @@ class ApplicationSpec extends WordSpecLike with Matchers with PropertyChecks wit
       forAll(VesselGenerator) {
         vessel: Vessel =>
           createVessel(vessel) map { uuid =>
-            val query = Json.toJson(services.SearchQuery("^.*?" + vessel.name.drop(1) + "$"))
+            val query = Json.toJson(services.SearchQuery(name = Some(vessel.name.drop(1)), width = None, length = None, draft = None))
             val findByCiteriaRequest = FakeRequest(POST, s"/vessels/search").withJsonBody(query)
             val findByCiteriaResponse = route(findByCiteriaRequest).get
             status(findByCiteriaResponse) should be(OK)

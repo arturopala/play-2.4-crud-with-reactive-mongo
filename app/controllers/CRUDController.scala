@@ -55,10 +55,12 @@ abstract class CRUDController[E: Format, ID](val service: CRUDService[E, ID])(re
 
   def validateAndThen[T: Reads](t: T => Future[Result])(implicit request: Request[JsValue]) = {
     request.body.validate[T].map(t) match {
-      case JsSuccess(result, _) => result
-      case JsError(err) => Future.successful(BadRequest(Json.toJson(err.map {
-        case (path, errors) => Json.obj("path" -> path.toString, "errors" -> JsArray(errors.flatMap(e => e.messages.map(JsString(_)))))
-      })))
+      case JsSuccess(result, _) =>
+        result.recover { case e => BadRequest(e.getMessage()) }
+      case JsError(err) =>
+        Future.successful(BadRequest(Json.toJson(err.map {
+          case (path, errors) => Json.obj("path" -> path.toString, "errors" -> JsArray(errors.flatMap(e => e.messages.map(JsString(_)))))
+        })))
     }
   }
 

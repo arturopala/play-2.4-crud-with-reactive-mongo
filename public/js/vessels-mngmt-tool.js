@@ -48,49 +48,33 @@ angular.module('VesselMgmtTool',['uiGmapgoogle-maps'])
       }
     };
 
-    /*var Criteria = {
-      addPrefix: function(criteria,field,model,form){
-        if(form[field] && model[field]) criteria[field] = {"$regex": '^'+model[field]+'.*',"$options":"i"}
-      },
-      addRegex: function(criteria,field,model,form){
-        if(form[field] && model[field]) criteria[field] = {"$regex":'.*?'+model[field]+'.*',"$options":"i"} 
-      },
-      addRange: function(criteria,field,range,model,form){
-        if(form[field] && model[field]) {
-          var gt = {}; gt[field] = {"$gt":(model[field]-range/2)};
-          var lt = {}; lt[field] = {"$lt":(model[field]+range/2)};
-          criteria['$and'] = [gt,lt]
-        }
-      }
-    }*/
-
     $scope.search = function(){
       PageState.busy = "searching";
       PageState.vessel = undefined;
       PageState.listing = [];
-      /*var q1 = {}; var q2 = {}; var q3 = {}; var q4 = {};
-      Criteria.addRegex(q1,"name",$scope.vessel,$scope.vesselForm)
-      Criteria.addRange(q1,"width",2,$scope.vessel,$scope.vesselForm)
-      Criteria.addRegex(q2,"name",$scope.vessel,$scope.vesselForm)
-      Criteria.addRange(q2,"length",2,$scope.vessel,$scope.vesselForm)
-      Criteria.addRegex(q3,"name",$scope.vessel,$scope.vesselForm)
-      Criteria.addRange(q3,"draft",2,$scope.vessel,$scope.vesselForm)
-      Criteria.addPrefix(q4,"name",$scope.vessel,$scope.vesselForm)
-      var criteria = {"$or":[q4,q1,q2,q3]}*/
-      var query = {name: $scope.vessel.name}
-      VesselsService.search(query).success(function(data, status, headers){
-          if(status==200) {
-          	if(angular.isArray(data)){
-          		if(data.length == 1){
-					       PageState.vessel = data[0];
-          		} else if(data.length>1){
-					       PageState.listing = data;
-          		}
-          	}
-          }
-          PageState.busy = false;
-          $scope.vesselForm.$setPristine();
-      });
+      var query = {
+        name: $scope.vessel.name, 
+        width: $scope.vessel.width, 
+        length: $scope.vessel.length,
+        draft: $scope.vessel.draft
+      }
+      if(query.name && query.name.length>=3) {
+        VesselsService.search(query).success(function(data, status, headers){
+            if(status==200) {
+            	if(angular.isArray(data)){
+            		if(data.length == 1){
+  					       PageState.vessel = data[0];
+            		} else if(data.length>1){
+  					       PageState.listing = data;
+            		}
+            	}
+            }
+            PageState.busy = false;
+            $scope.vesselForm.$setPristine();
+        });
+      } else {
+        PageState.busy = "invalid";
+      }
     };
 
     $scope.mousedown = function(){
