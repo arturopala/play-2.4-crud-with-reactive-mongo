@@ -2,11 +2,22 @@
 
 #Seed for Play Framework 2.4 CRUD application with Macwire, ReactiveMongo and AngularJS
 
-This app is deployed on Heroku: <https://play24-crud-with-mongo.herokuapp.com/>
+This is Lightbend Activator template, see details here: <https://www.lightbend.com/activator/template/play-2.4-crud-with-reactive-mongo>
 
-###run
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
+
+### Build
 
 ```
-$sbt run
+sbt test:compile
+```
+
+### Run
+
+```
+sbt run
 ```  
+
+<http://localhost:9000/>
 
