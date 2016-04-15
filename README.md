@@ -12,7 +12,7 @@ A [**Play Framework 2.4**](https://www.playframework.com/documentation/2.4.x/Hom
 
 Provides generic **CRUD** implementation of controller and service, together with type-safe mongodb queries builder (Criteria).
 
-**Criteria** allows advanced local testing of mongodb querries (in-memory) without communicating real mongodb instance.
+**Criteria** allows also advanced local testing of mongodb querries (in-memory) without communicating real mongodb instance.
 
 ## Usage
 
