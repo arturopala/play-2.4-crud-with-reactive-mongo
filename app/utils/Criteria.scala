@@ -11,6 +11,7 @@ import play.api.libs.json._
 trait Criteria {
   /**Checks if given document fullfils this criteria*/
   def matches(document: JsObject): Boolean
+  def missingValueMatchResult: Boolean = false
   /**Serializes criteria back to JSON query expression*/
   def toJson: JsObject
 
@@ -23,7 +24,8 @@ trait Criteria {
  */
 trait Constraint {
   /**Checks if document matches this constraint at given path*/
-  def matches(document: JsObject, path: JsPath): Boolean
+  def matches(value: JsValue): Boolean
+  def missingValueMatchResult: Boolean = false
   /**Serializes constraint back to JSON query expression*/
   def toJson: JsObject
 }
@@ -94,9 +96,10 @@ object Criteria extends CriteriaImplicits {
   }
 
   /**Wraps Constraint as a Criteria*/
-  case class If(path: String, c: Constraint) extends Criteria with PathBased {
-    override def matches(document: JsObject): Boolean = c.matches(document, jsPath)
+  case class If(path: String, c: Constraint) extends PathValueCriteria {
+    override def matchValue(value: JsValue): Boolean = c.matches(value)
     override def toJson = Json.obj(path -> c.toJson)
+    override val missingValueMatchResult: Boolean = c.missingValueMatchResult
   }
 
   object If {
@@ -127,8 +130,9 @@ object Criteria extends CriteriaImplicits {
 
   /**Inverts the effect of a nested operator(s)*/
   case class Not(c: Constraint) extends Constraint {
-    override def matches(document: JsObject, path: JsPath): Boolean = !c.matches(document, path)
+    override def matches(value: JsValue): Boolean = !c.matches(value)
     override def toJson = Json.obj(NotConstraint.key -> c.toJson)
+    override val missingValueMatchResult: Boolean = true
   }
 
   ///////////////////////////////
@@ -136,7 +140,7 @@ object Criteria extends CriteriaImplicits {
   ///////////////////////////////
 
   /**Selects where values match a specified regular expression*/
-  case class Regex(pattern: String, options: Option[String] = None) extends ValueConstraint {
+  case class Regex(pattern: String, options: Option[String] = None) extends Constraint {
     import java.util.regex.Pattern
 
     def i(o: String): Int = if (o.indexOf("i") >= 0) Pattern.CASE_INSENSITIVE else 0
@@ -147,7 +151,7 @@ object Criteria extends CriteriaImplicits {
     val flags = options.map(o => i(o) | m(o) | s(o) | x(o)).getOrElse(0)
     val regex = Pattern.compile(pattern, flags)
 
-    override def matchValue(value: JsValue): Boolean = value match {
+    override def matches(value: JsValue): Boolean = value match {
       case JsString(s) => regex.matcher(s).matches
       case _ => false
     }
@@ -167,7 +171,7 @@ object Criteria extends CriteriaImplicits {
 
   /**Matches values that are equal to a specified value*/
   case class EEq(pattern: JsValue) extends SimpleConstraint(EqConstraint.key) {
-    override def matchValue(value: JsValue): Boolean = JsValueMatch.matches(value, pattern)
+    override def matches(value: JsValue): Boolean = JsValueMatch.matches(value, pattern)
   }
 
   object EEq {
@@ -179,7 +183,7 @@ object Criteria extends CriteriaImplicits {
 
   /**Matches values that are not equal to a specified value*/
   case class Ne(pattern: JsValue) extends SimpleConstraint(NeConstraint.key) {
-    override def matchValue(value: JsValue): Boolean = !JsValueMatch.matches(value, pattern)
+    override def matches(value: JsValue): Boolean = !JsValueMatch.matches(value, pattern)
   }
 
   object Ne {
@@ -191,7 +195,7 @@ object Criteria extends CriteriaImplicits {
 
   /**Matches values that are less than a specified value*/
   case class Lt(pattern: JsValue) extends SimpleConstraint(LtConstraint.key) {
-    override def matchValue(value: JsValue): Boolean = JsValueOrdering.lt(value, pattern)
+    override def matches(value: JsValue): Boolean = JsValueOrdering.lt(value, pattern)
   }
 
   object Lt {
@@ -201,7 +205,7 @@ object Criteria extends CriteriaImplicits {
 
   /**Matches values that are greater than a specified value*/
   case class Gt(pattern: JsValue) extends SimpleConstraint(GtConstraint.key) {
-    override def matchValue(value: JsValue): Boolean = JsValueOrdering.gt(value, pattern)
+    override def matches(value: JsValue): Boolean = JsValueOrdering.gt(value, pattern)
   }
 
   object Gt {
@@ -211,7 +215,7 @@ object Criteria extends CriteriaImplicits {
 
   /**Matches values that are less than or equal to a specified value*/
   case class Lte(pattern: JsValue) extends SimpleConstraint(LteConstraint.key) {
-    override def matchValue(value: JsValue): Boolean = JsValueOrdering.lteq(value, pattern)
+    override def matches(value: JsValue): Boolean = JsValueOrdering.lteq(value, pattern)
   }
 
   object Lte {
@@ -221,7 +225,7 @@ object Criteria extends CriteriaImplicits {
 
   /**Matches values that are greater than or equal to a specified value*/
   case class Gte(pattern: JsValue) extends SimpleConstraint(GteConstraint.key) {
-    override def matchValue(value: JsValue): Boolean = JsValueOrdering.gteq(value, pattern)
+    override def matches(value: JsValue): Boolean = JsValueOrdering.gteq(value, pattern)
   }
 
   object Gte {
@@ -277,7 +281,7 @@ object CriteriaUtils {
 
     override def matches(document: JsObject): Boolean = jsPath.asSingleJson(document) match {
       case JsDefined(value) => matchValue(value)
-      case _ => false
+      case _ => missingValueMatchResult
     }
   }
 
@@ -293,18 +297,8 @@ object CriteriaUtils {
     override def extract(value: JsValue, obj: JsObject): JsValue = value
   }
 
-  /**Constraint based on by-path extracted value*/
-  trait ValueConstraint extends Constraint {
-    def matchValue(value: JsValue): Boolean
-
-    override def matches(document: JsObject, path: JsPath): Boolean = path.asSingleJson(document) match {
-      case JsDefined(value) => matchValue(value)
-      case _ => false
-    }
-  }
-
   /**Single value constraint*/
-  abstract class SimpleConstraint(key: String) extends ValueConstraint {
+  abstract class SimpleConstraint(key: String) extends Constraint {
     val pattern: JsValue
     override def toJson = Json.obj(key -> pattern)
   }
