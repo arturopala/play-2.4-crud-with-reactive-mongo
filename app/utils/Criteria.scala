@@ -304,23 +304,24 @@ object CriteriaUtils {
   }
 
   object JsValueMatch {
-    def matches(x: JsValue, y: JsValue): Boolean = (x, y) match {
+    def matches(value: JsValue, pattern: JsValue): Boolean = (value, pattern) match {
       case (JsNull, JsNull) => true
       case (JsString(s1), JsString(s2)) => s1 == s2
       case (JsBoolean(b1), JsBoolean(b2)) => b1 == b2
       case (JsNumber(n1), JsNumber(n2)) => n1 == n2
-      //Equality matches on the array require that the array field match exactly, including the element order.
-      case (JsArray(seq1), JsArray(seq2)) => seq1.zip(seq2).forall {
-        case (c, i) => matches(c, i)
-      }
+      //Equality matches on the array require that the value array field match exactly pattern array
+      //or the value array contains an element that equals the pattern array
+      case (JsArray(seq1), pat @ JsArray(seq2)) => (seq1 == seq2) || (seq1 contains pattern)
+      //or the value array contains a pattern element
+      case (JsArray(seq1), pat) => seq1 contains pattern
       //Equality matches on an embedded document require an exact match, including the field order
-      case (c: JsObject, d: JsObject) => c.fields.sameElements(d.fields)
+      case (c: JsObject, d: JsObject) => c.fields == d.fields
       case _ => false
     }
   }
 
   implicit object JsValueOrdering extends Ordering[JsValue] {
-    override def compare(x: JsValue, y: JsValue): Int = (x, y) match {
+    override def compare(value: JsValue, pattern: JsValue): Int = (value, pattern) match {
       case (JsNumber(n1), JsNumber(n2)) => n1.compare(n2)
       case (JsString(s1), JsString(s2)) => s1.compare(s2)
       case (JsBoolean(b1), JsBoolean(b2)) => b1.compare(b2)

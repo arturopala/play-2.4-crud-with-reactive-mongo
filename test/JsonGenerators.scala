@@ -29,6 +29,7 @@ trait JsonGenerators {
   val anyValue: Gen[Any] = Gen.frequency((3, primitives), (1, arrays), (2, objects))
 
   val jsValue: Gen[JsValue] = anyValue map toJsValue
+  val jsArray: Gen[JsArray] = Gen.listOf(jsValue) map JsArray.apply
   val jsField: Gen[(String, JsValue)] = Gen.zip(name, jsValue)
   val simpleJsonObject: Gen[JsObject] = jsField map { case (n, v) => Json.obj(n -> v) }
   val complexJsonObject: Gen[JsObject] = Gen.listOf(jsField) map JsObject.apply

@@ -253,6 +253,80 @@ class CriteriaSpec extends WordSpecLike with Matchers with PropertyChecks with J
         }
       }
     }
+
+    "match equality when document field value is an array and constraint pattern is an exact array" in {
+      forAll(complexJsonObject, name, jsArray) { (json: JsObject, name: String, array: JsArray) =>
+        val query = Json.obj(name -> array)
+        val document = json ++ query
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "not match equality when document field value is an array and constraint pattern is an extented array" in {
+      forAll(complexJsonObject, name, jsArray) { (json: JsObject, name: String, array: JsArray) =>
+        val query = Json.obj(name -> (array :+ JsString("foo")))
+        val document = json ++ Json.obj(name -> array)
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "not match equality when document field value is an array and constraint pattern is a shrinked array" in {
+      forAll(complexJsonObject, name, jsArray) { (json: JsObject, name: String, array: JsArray) =>
+        val query = Json.obj(name -> array)
+        val document = json ++ Json.obj(name -> (array :+ JsString("foo")))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "not match equality when document field value is an array and constraint pattern is a simillar but reordered array" in {
+      forAll(complexJsonObject, name, jsArray) { (json: JsObject, name: String, array: JsArray) =>
+        whenever(array.value.length > 0) {
+          val query = Json.obj(name -> (JsString("foo") +: array))
+          val document = json ++ Json.obj(name -> (array :+ JsString("foo")))
+          Criteria(query).matches(document) shouldBe false
+        }
+      }
+    }
+
+    "match equality when document field value is an array and constraint pattern is an element of that array" in {
+      forAll(complexJsonObject, name, jsArray, jsValue) { (json: JsObject, name: String, array: JsArray, element: JsValue) =>
+        val query = Json.obj(name -> element)
+        val document = json ++ Json.obj(name -> (array :+ element))
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "match equality when document field value is an array and constraint pattern is an array element of that array" in {
+      forAll(complexJsonObject, name, jsArray, jsArray) { (json: JsObject, name: String, array: JsArray, element: JsArray) =>
+        val query = Json.obj(name -> element)
+        val document = json ++ Json.obj(name -> (array :+ element))
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "match equality when document field value is an object and constraint pattern is an exact object" in {
+      forAll(complexJsonObject, name, simpleJsonObject) { (json: JsObject, name: String, obj: JsObject) =>
+        val query = Json.obj(name -> obj)
+        val document = json ++ query
+        Criteria(query).matches(document) shouldBe true
+      }
+    }
+
+    "not match equality when document field value is an object and constraint pattern is an extended object" in {
+      forAll(complexJsonObject, name, simpleJsonObject, jsField) { (json: JsObject, name: String, obj: JsObject, field: (String, JsValue)) =>
+        val query = Json.obj(name -> (json ++ (obj + field)))
+        val document = Json.obj(name -> json)
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
+
+    "not match equality when document field value is an object and constraint pattern is a shrinked object" in {
+      forAll(complexJsonObject, name, simpleJsonObject, jsField) { (json: JsObject, name: String, obj: JsObject, field: (String, JsValue)) =>
+        val query = Json.obj(name -> json)
+        val document = Json.obj(name -> (json ++ (obj + field)))
+        Criteria(query).matches(document) shouldBe false
+      }
+    }
   }
 
   "An EEq (explicit equality) constraint" must {
