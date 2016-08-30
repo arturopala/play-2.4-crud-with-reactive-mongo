@@ -4,7 +4,7 @@ version := "1.1.0-SNAPSHOT"
 
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
-startYear := Some(2015)
+startYear := Some(2016)
 
 description := "Play 2.4 project seed: Generic CRUD with Macwire and ReactiveMongo"
 
@@ -21,7 +21,7 @@ libraryDependencies ++= Seq(
   specs2 % Test,
   "com.softwaremill.macwire" %% "macros" % "2.2.2",
   "com.softwaremill.macwire" %% "runtime" % "1.0.7",
-  "org.reactivemongo" %% "play2-reactivemongo" % "0.11.10",
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.12-RC3-play24",
 
   "org.scalatest" %% "scalatest" % "2.2.6" % Test,
   "org.scalacheck" %% "scalacheck" % "1.12.5" % Test,
