@@ -21,11 +21,11 @@ libraryDependencies ++= Seq(
   specs2 % Test,
   "com.softwaremill.macwire" %% "macros" % "2.2.2",
   "com.softwaremill.macwire" %% "runtime" % "1.0.7",
-  "org.reactivemongo" %% "play2-reactivemongo" % "0.11.10",
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.12.0-play24",
 
   "org.scalatest" %% "scalatest" % "2.2.6" % Test,
   "org.scalacheck" %% "scalacheck" % "1.12.5" % Test,
-  "org.scalatestplus" % "play_2.11" % "1.4.0" % Test
+  "org.scalatestplus" %% "play" % "1.4.0" % Test
 )
 
 routesGenerator := play.routes.compiler.InjectedRoutesGenerator
