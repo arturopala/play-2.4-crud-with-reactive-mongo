@@ -23,6 +23,7 @@ trait CRUDService[E, ID] {
 
 import models.Identity
 import reactivemongo.api._
+import reactivemongo.api.commands.WriteResult
 
 /**
  * Abstract {{CRUDService}} impl backed by JSONCollection
@@ -49,8 +50,8 @@ abstract class MongoCRUDService[E: Format, ID: Format](
         val doc = Json.toJson(identity.set(entity, id)).as[JsObject]
 
         collection.flatMap(_.insert(doc).map {
-          case le if le.ok == true => Right(id)
-          case le => Left(le.message)
+          case le @ WriteResult.Message(error) if !le.ok => Left(error)
+          case _ => Right(id)
         })
       }
     }
@@ -61,14 +62,14 @@ abstract class MongoCRUDService[E: Format, ID: Format](
   def update(id: ID, entity: E)(implicit ec: ExecutionContext): Future[Either[String, ID]] = {
     val doc = Json.toJson(identity.set(entity, id)).as[JsObject]
     collection.flatMap(_.update(Json.obj(identity.name -> id), doc) map {
-      case le if le.ok == true => Right(id)
-      case le => Left(le.message)
+      case le @ WriteResult.Message(error) if !le.ok => Left(error)
+      case _ => Right(id)
     })
   }
 
   def delete(id: ID)(implicit ec: ExecutionContext): Future[Either[String, ID]] = collection.flatMap(_.remove(Json.obj(identity.name -> id)) map {
-    case le if le.ok == true => Right(id)
-    case le => Left(le.message)
+    case le @ WriteResult.Message(error) if !le.ok => Left(error)
+    case _ => Right(id)
   })
 
   def search(criteria: JsObject, limit: Int)(implicit ec: ExecutionContext): Future[Traversable[E]] =
